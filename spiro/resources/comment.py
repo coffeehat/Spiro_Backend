@@ -25,14 +25,14 @@ response_fields.get = {
 response_fields.post = response_fields.get
 
 class Comment(Resource):
-  @use_args(request_args.get, location="form")
+  @use_args(request_args.get, location="json")
   @marshal_with(response_fields.get)
   def get(self, args):
     comment_id = args["comment_id"]
     
     return get_comment(comment_id)
 
-  @use_args(request_args.post, location="form")
+  @use_args(request_args.post, location="json")
   @marshal_with(response_fields.post)
   def post(self, args):
     article_id = args["article_id"]

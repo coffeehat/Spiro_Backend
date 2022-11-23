@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_restful import Api
+from flask_cors import CORS
 
 from .common.utils import singleton
 from .config import config
@@ -9,6 +10,7 @@ from .resources import *
 class Server:
   def __init__(self):
     self.app = Flask(config.app_name)
+    CORS(self.app, supports_credentials=True)
     self.api = Api(self.app)
 
     self._add_resource()

@@ -21,7 +21,7 @@ response_fields.get = {
 }
 
 class CommentList(Resource):
-  @use_args(request_args.get, location="form")
+  @use_args(request_args.get, location="json")
   @marshal_with(response_fields.get)
   def get(self, args):
     article_id  = args["article_id"]
