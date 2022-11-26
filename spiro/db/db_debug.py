@@ -38,12 +38,13 @@ def get_comment(comment_id):
   raise DbNotFound("Comment_id does not exist in backend")
 
 @handle_exception
-def save_comment(article_id, comment):
+def save_comment(article_id, user_id, comment):
   if not article_id in db_comment:
     db_comment[article_id] = []
 
   item = {
     "article_id":   article_id,
+    "user_id":      user_id,
     "comment_id":   int(uuid.uuid4().hex, 16),
     "comment_time": get_current_time(),
     "comment":      comment

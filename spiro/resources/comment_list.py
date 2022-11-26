@@ -1,4 +1,5 @@
 from easydict import EasyDict
+from flask import request
 from flask_restful import Resource, marshal_with, fields as restful_fields
 from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
@@ -21,7 +22,7 @@ response_fields.get = {
 }
 
 class CommentList(Resource):
-  @use_args(request_args.get, location="json")
+  @use_args(request_args.get, location="query")
   @marshal_with(response_fields.get)
   def get(self, args):
     article_id  = args["article_id"]

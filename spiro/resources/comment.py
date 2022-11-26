@@ -11,12 +11,14 @@ request_args.get = {
 }
 request_args.post = {
   "article_id":   webargs_fields.Integer(),
+  "user_id":      webargs_fields.Integer(),
   "comment":      webargs_fields.String()
 }
 
 response_fields = EasyDict()
 response_fields.get = {
   "article_id":   restful_fields.Integer(),
+  "user_id":      restful_fields.Integer(),
   "comment_id":   restful_fields.Integer(),
   "comment_time": restful_fields.DateTime(dt_format="rfc822"),
   "comment":      restful_fields.String(),
@@ -37,5 +39,6 @@ class Comment(Resource):
   def post(self, args):
     article_id = args["article_id"]
     comment = args["comment"]
+    user_id = args["user_id"]
 
-    return save_comment(article_id, comment)
+    return save_comment(article_id, user_id, comment)
