@@ -1,7 +1,7 @@
 import uuid
 
 from ..common.exceptions import handle_exception, DbNotFound, ArgInvalid
-from ..common.time import get_current_time
+from ..common.time import get_time_stamp
 
 db_comment = {}
 
@@ -46,7 +46,7 @@ def save_comment(article_id, user_id, comment):
     "article_id":   article_id,
     "user_id":      user_id,
     "comment_id":   int(uuid.uuid4().hex, 16),
-    "comment_time": get_current_time(),
+    "comment_time": str(get_time_stamp()),
     "comment":      comment
   }
 

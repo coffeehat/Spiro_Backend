@@ -20,7 +20,7 @@ response_fields.get = {
   "article_id":   restful_fields.Integer(),
   "user_id":      restful_fields.Integer(),
   "comment_id":   restful_fields.Integer(),
-  "comment_time": restful_fields.DateTime(dt_format="rfc822"),
+  "comment_time": restful_fields.String(),
   "comment":      restful_fields.String(),
   "error_msg":    restful_fields.String()
 }
