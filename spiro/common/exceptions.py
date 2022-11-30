@@ -38,3 +38,20 @@ class DbException(CommonException):
 
 class DbNotFound(DbException):
   pass
+
+# Exception for User
+
+class UserException(CommonException):
+  pass
+
+class UserRegisterException(CommonException):
+  pass
+
+class UserRegDupNameException(UserRegisterException):
+  pass
+
+class UserRegDupEmailException(UserRegisterException):
+  pass
+
+class UserLoginException(CommonException):
+  pass

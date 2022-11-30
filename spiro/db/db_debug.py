@@ -1,6 +1,7 @@
+import re
 import uuid
 
-from ..common.exceptions import handle_exception, DbNotFound, ArgInvalid
+from ..common.exceptions import *
 from ..common.time import get_time_stamp
 
 db_comment = {}
@@ -52,3 +53,69 @@ def save_comment(article_id, user_id, comment):
 
   db_comment[article_id].append(item)
   return item
+
+# For user
+
+db_user = {}
+
+import hashlib
+
+def hash_password(password):
+  if not isinstance(password, bytes):
+    password = bytes(password, 'utf-8')
+  m = hashlib.sha256()
+  m.update(password)
+  return m.hexdigest()
+
+def verify_password(password, hash):
+  if not isinstance(password, bytes):
+    password = bytes(password, 'utf-8')
+  m = hashlib.sha256()
+  m.update(password)
+  return m.hexdigest() == hash
+
+@handle_exception
+def user_register(username, email, password):
+  # TODO: Need refinement in future
+  # Duplication test
+  for key in db_user:
+    if username == db_user[key]['username']:
+      raise UserRegDupNameException("Duplicate User Name")
+    if email == db_user[key]['email']:
+      raise UserRegDupEmailException("Duplicate Email")
+  
+  # Save Password
+  hash = hash_password(password)
+  user_id = int(uuid.uuid4().hex, 16)
+  db_user[user_id] = {
+    'username': username,
+    'email': email,
+    'password': hash
+  }
+
+  return {
+    "error_code": 0,
+    "error_msg": "",
+    "status_code": 0,
+    "status_msg": ""
+  }
+
+email_pattern = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
+
+def user_verify(username, password):
+  if re.match(email_pattern, username):
+    email = username
+    for key in db_user:
+      if email == db_user[key]['email']:
+        if verify_password(password, db_user[key]['password']):
+          return True
+        else:
+          return False
+  else:
+    for key in db_user:
+      if username == db_user[key]['username']:
+        if verify_password(password, db_user[key]['password']):
+          return True
+        else:
+          return False
+    return False

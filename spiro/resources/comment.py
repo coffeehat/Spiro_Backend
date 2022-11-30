@@ -26,6 +26,9 @@ response_fields.get = {
 }
 response_fields.post = response_fields.get
 
+
+from .user import auth
+
 class Comment(Resource):
   @use_args(request_args.get, location="json")
   @marshal_with(response_fields.get)
@@ -35,6 +38,7 @@ class Comment(Resource):
     return get_comment(comment_id)
 
   @use_args(request_args.post, location="json")
+  @auth.login_required
   @marshal_with(response_fields.post)
   def post(self, args):
     article_id = args["article_id"]
