@@ -97,8 +97,30 @@ def user_register(username, email, password):
     "error_code": 0,
     "error_msg": "",
     "status_code": 0,
-    "status_msg": ""
+    "status_msg": "",
+    "token": ""
   }
+
+@handle_exception
+def user_login(username, password):
+  flag, uid = user_verify(username, password)
+  if (flag):
+    token = generate_token(uid, seconds=20)
+    return {
+      "error_code": 0,
+      "error_msg": "",
+      "status_code": 0,
+      "status_msg": "",
+      "token": token
+    }
+  else:
+    return {
+      "error_code": 0,
+      "error_msg": "",
+      "status_code": 0,
+      "status_msg": "",
+      "token": ""
+    }
 
 email_pattern = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
 
@@ -108,14 +130,40 @@ def user_verify(username, password):
     for key in db_user:
       if email == db_user[key]['email']:
         if verify_password(password, db_user[key]['password']):
-          return True
+          return True, key
         else:
-          return False
+          return False, None
   else:
     for key in db_user:
       if username == db_user[key]['username']:
         if verify_password(password, db_user[key]['password']):
-          return True
+          return True, key
         else:
-          return False
+          return False, None
+    return False, None
+
+
+from jose import jwt
+from jose.exceptions import ExpiredSignatureError, JWTError
+from datetime import datetime,timedelta
+
+SECERT_KEY = 'test'
+
+def generate_token(uid, seconds=20):
+  expire = datetime.utcnow() + timedelta(seconds=seconds)
+
+  token = {
+    "exp": expire,
+    "uid": uid,
+    "sub": SECERT_KEY
+  }
+  return jwt.encode(claims=token, key=SECERT_KEY)
+
+def verify_token(token):
+  try:
+    payload = jwt.decode(token, SECERT_KEY)
+    return True
+  except ExpiredSignatureError as e:
+    return False
+  except JWTError as e:
     return False

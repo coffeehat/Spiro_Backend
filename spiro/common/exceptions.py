@@ -55,3 +55,9 @@ class UserRegDupEmailException(UserRegisterException):
 
 class UserLoginException(CommonException):
   pass
+
+class UserLoginTokenExpired(UserLoginException):
+  pass
+
+class UserLoginTokenSignError(UserLoginException):
+  pass

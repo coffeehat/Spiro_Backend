@@ -18,7 +18,7 @@ class Server:
   def _add_resource(self):
     self.api.add_resource(CommentList, "/" + config.version + "/comment_list")
     self.api.add_resource(Comment, "/" + config.version + "/comment")
-    self.api.add_resource(UserRegister, "/" + config.version + "/user_register")
+    self.api.add_resource(User, "/" + config.version + "/user")
 
   def run(self):
     self.app.run()
