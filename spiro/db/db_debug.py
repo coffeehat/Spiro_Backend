@@ -56,7 +56,7 @@ def save_comment(article_id, user_id, comment):
 
 # For user
 
-db_user = {}
+db_users = {}
 
 import hashlib
 
@@ -78,16 +78,16 @@ def verify_password(password, hash):
 def user_register(username, email, password):
   # TODO: Need refinement in future
   # Duplication test
-  for key in db_user:
-    if username == db_user[key]['username']:
+  for key in db_users:
+    if username == db_users[key]['username']:
       raise UserRegDupNameException("Duplicate User Name")
-    if email == db_user[key]['email']:
+    if email == db_users[key]['email']:
       raise UserRegDupEmailException("Duplicate Email")
   
   # Save Password
   hash = hash_password(password)
   user_id = int(uuid.uuid4().hex, 16)
-  db_user[user_id] = {
+  db_users[user_id] = {
     'username': username,
     'email': email,
     'password': hash
@@ -105,7 +105,7 @@ def user_register(username, email, password):
 def user_login(username, password):
   flag, uid = user_verify(username, password)
   if (flag):
-    token = generate_token(uid, seconds=20)
+    token = generate_token(uid, seconds=1000)
     return {
       "error_code": 0,
       "error_msg": "",
@@ -127,16 +127,16 @@ email_pattern = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A
 def user_verify(username, password):
   if re.match(email_pattern, username):
     email = username
-    for key in db_user:
-      if email == db_user[key]['email']:
-        if verify_password(password, db_user[key]['password']):
+    for key in db_users:
+      if email == db_users[key]['email']:
+        if verify_password(password, db_users[key]['password']):
           return True, key
         else:
           return False, None
   else:
-    for key in db_user:
-      if username == db_user[key]['username']:
-        if verify_password(password, db_user[key]['password']):
+    for key in db_users:
+      if username == db_users[key]['username']:
+        if verify_password(password, db_users[key]['password']):
           return True, key
         else:
           return False, None
@@ -162,8 +162,8 @@ def generate_token(uid, seconds=20):
 def verify_token(token):
   try:
     payload = jwt.decode(token, SECERT_KEY)
-    return True
+    return True, payload["uid"]
   except ExpiredSignatureError as e:
-    return False
+    return False, None
   except JWTError as e:
-    return False
+    return False, None

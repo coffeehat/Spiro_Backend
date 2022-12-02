@@ -3,6 +3,7 @@ from flask_restful import Resource, marshal_with, fields as restful_fields
 from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
+from ..auth import multi_auth
 from ..db import get_comment, save_comment
 
 request_args = EasyDict()
@@ -26,19 +27,14 @@ response_fields.get = {
 }
 response_fields.post = response_fields.get
 
-
-from .user import auth
-
 class Comment(Resource):
   @use_args(request_args.get, location="json")
   @marshal_with(response_fields.get)
   def get(self, args):
     comment_id = args["comment_id"]
-    
     return get_comment(comment_id)
 
   @use_args(request_args.post, location="json")
-  @auth.login_required
   @marshal_with(response_fields.post)
   def post(self, args):
     article_id = args["article_id"]

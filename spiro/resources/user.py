@@ -1,10 +1,9 @@
 from easydict import EasyDict
 from flask_restful import Resource, marshal_with, fields as restful_fields
-from flask_httpauth import HTTPBasicAuth
 from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
-from ..db import user_register, user_verify, user_login, verify_token
+from ..db import user_register, user_login
 
 request_args = {
   "method":   webargs_fields.String(required=True),
@@ -32,12 +31,3 @@ class User(Resource):
       return user_register(username, email, password)
     elif args["method"] == "login":
       return user_login(username, password)
-
-auth = HTTPBasicAuth()
-
-@auth.verify_password
-def verify_crediential(username, password):
-  if len(password):
-    return user_verify(username, password)[0]
-  else:
-    return verify_token(username)
