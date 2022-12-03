@@ -39,13 +39,13 @@ def get_comment(comment_id):
   raise DbNotFound("Comment_id does not exist in backend")
 
 @handle_exception
-def save_comment(article_id, user_id, comment):
+def save_comment(article_id, username, comment):
   if not article_id in db_comment:
     db_comment[article_id] = []
 
   item = {
     "article_id":   article_id,
-    "user_id":      user_id,
+    "username":     username,
     "comment_id":   int(uuid.uuid4().hex, 16),
     "comment_time": str(get_time_stamp()),
     "comment":      comment
@@ -58,21 +58,7 @@ def save_comment(article_id, user_id, comment):
 
 db_users = {}
 
-import hashlib
-
-def hash_password(password):
-  if not isinstance(password, bytes):
-    password = bytes(password, 'utf-8')
-  m = hashlib.sha256()
-  m.update(password)
-  return m.hexdigest()
-
-def verify_password(password, hash):
-  if not isinstance(password, bytes):
-    password = bytes(password, 'utf-8')
-  m = hashlib.sha256()
-  m.update(password)
-  return m.hexdigest() == hash
+from ..auth.utils import hash_password, verify_password
 
 @handle_exception
 def user_register(username, email, password):

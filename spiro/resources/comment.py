@@ -11,15 +11,16 @@ request_args.get = {
   "comment_id":   webargs_fields.Integer(required=True),
 }
 request_args.post = {
-  "article_id":   webargs_fields.Integer(),
-  "user_id":      webargs_fields.Integer(),
-  "comment":      webargs_fields.String()
+  "article_id":   webargs_fields.Integer(required=True),
+  "comment":      webargs_fields.String(required=True),
+  "username":     webargs_fields.String(),
+  "email":        webargs_fields.String()
 }
 
 response_fields = EasyDict()
 response_fields.get = {
   "article_id":   restful_fields.Integer(),
-  "user_id":      restful_fields.Integer(),
+  "username":     restful_fields.String(),
   "comment_id":   restful_fields.Integer(),
   "comment_time": restful_fields.String(),
   "comment":      restful_fields.String(),
@@ -28,17 +29,19 @@ response_fields.get = {
 response_fields.post = response_fields.get
 
 class Comment(Resource):
-  @use_args(request_args.get, location="json")
+  @use_args(request_args.get, location="form")
   @marshal_with(response_fields.get)
   def get(self, args):
     comment_id = args["comment_id"]
     return get_comment(comment_id)
 
-  @use_args(request_args.post, location="json")
+  @use_args(request_args.post, location="form")
+  @multi_auth.login_required(role=["Visitor", "Member"])
   @marshal_with(response_fields.post)
   def post(self, args):
-    article_id = args["article_id"]
-    comment = args["comment"]
-    user_id = args["user_id"]
+    article_id  = args["article_id"]
+    comment     = args["comment"]
+    username    = multi_auth.current_user()["username"]
+    email       = multi_auth.current_user()["email"]
 
-    return save_comment(article_id, user_id, comment)
+    return save_comment(article_id, username, comment)
