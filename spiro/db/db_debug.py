@@ -2,7 +2,7 @@ import re
 import uuid
 
 from ..common.exceptions import *
-from ..common.time import get_time_stamp
+from ..common.utils import get_time_stamp
 
 db_comment = {}
 
@@ -58,7 +58,7 @@ def save_comment(article_id, username, comment):
 
 db_users = {}
 
-from ..auth.utils import hash_password, verify_password
+from ..common.utils import hash_password, verify_password
 
 @handle_exception
 def user_register(username, email, password):

@@ -10,3 +10,8 @@ if config.db.is_debug:
   from .db_debug import verify_token
 else:
   pass
+
+from flask_sqlalchemy import SQLAlchemy
+db = SQLAlchemy()
+
+from .user import User

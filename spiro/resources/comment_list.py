@@ -21,7 +21,7 @@ response_fields.get = {
   "error_msg":    restful_fields.String()
 }
 
-class CommentList(Resource):
+class CommentListApi(Resource):
   @use_args(request_args.get, location="query")
   @marshal_with(response_fields.get)
   def get(self, args):

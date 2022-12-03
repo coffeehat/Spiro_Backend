@@ -28,7 +28,7 @@ response_fields.get = {
 }
 response_fields.post = response_fields.get
 
-class Comment(Resource):
+class CommentApi(Resource):
   @use_args(request_args.get, location="form")
   @marshal_with(response_fields.get)
   def get(self, args):

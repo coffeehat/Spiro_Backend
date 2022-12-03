@@ -3,13 +3,15 @@ from flask_restful import Resource, marshal_with, fields as restful_fields
 from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
-from ..db import user_register, user_login
+from ..common.utils import is_email
+from ..db.user import user_register, user_login
+
 
 request_args = {
   "method":   webargs_fields.String(required=True),
   "username": webargs_fields.String(),
   "password": webargs_fields.String(),
-  "email":    webargs_fields.String(),
+  "email":    webargs_fields.String(validate=is_email),
 }
 
 response_fields = {
@@ -20,7 +22,7 @@ response_fields = {
   "token": restful_fields.String()
 }
 
-class User(Resource):
+class UserApi(Resource):
   @use_args(request_args, location="json")
   @marshal_with(response_fields)
   def post(self, args):

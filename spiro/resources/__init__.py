@@ -1,3 +1,3 @@
-from .comment_list import CommentList
-from .comment import Comment
-from .user import User
+from .comment_list import CommentListApi
+from .comment import CommentApi
+from .user import UserApi

@@ -3,8 +3,7 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTError
 
-from .utils import verify_password, is_email
-
+from ..common.utils import is_email, verify_password
 from ..db.db_debug import db_users
 
 SECERT_KEY = 'test'
