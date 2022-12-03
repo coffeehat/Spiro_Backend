@@ -19,7 +19,7 @@ def verify_token(token):
       return None
     return {
       "id":         id,
-      "username":   user.username,
+      "username":   user.name,
       "email":      user.email
     }
   except ExpiredSignatureError as e:

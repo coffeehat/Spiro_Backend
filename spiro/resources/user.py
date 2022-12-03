@@ -46,7 +46,7 @@ def register_user(username, email, password):
   
   # Save info to db
   user = User(
-    username = username,
+    name = username,
     email = email,
     role  = "Member",
     password = get_password_hash(password),

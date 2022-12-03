@@ -16,14 +16,14 @@ def verify_pass(username_or_email, password):
       "username": form["username"] \
         if "username" in form                           else "Anonymous",
       "email":    form["email"]    \
-        if "email" and is_email(form["email"]) in form  else ""
+        if "email" in form and is_email(form["email"]) in form  else ""
     }
 
   flag, user = User.verify_user(username_or_email, password)
   if flag:
     return {
       "id":       user.id, 
-      "username": user.username,
+      "username": user.name,
       "email":    user.email
     }
   else:

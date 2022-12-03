@@ -5,7 +5,7 @@ from ..common.utils import is_email, verify_password
 
 class User(db.Model):
   id            = sa.Column(sa.Integer, primary_key=True)
-  username      = sa.Column(sa.String,  nullable=False, unique=True)
+  name          = sa.Column(sa.String,  nullable=False, unique=True)
   email         = sa.Column(sa.String,  nullable=False, unique=True)
   role          = sa.Column(sa.String,  nullable=False)
   password      = sa.Column(sa.String)
@@ -21,7 +21,7 @@ class User(db.Model):
   @staticmethod
   def find_user_by_username(username):
     user = db.session.execute(sa.select(User) \
-      .where(User.username == username) \
+      .where(User.name == username) \
       .limit(1)
     ).scalars().first()
     if user:
@@ -58,7 +58,7 @@ class User(db.Model):
   def is_username_dup(username):
     ret = db.session.execute(
       sa.select(sa.func.count().label("count")) \
-      .where(User.username == username) \
+      .where(User.name == username) \
       .limit(1)
     ).first()
     return ret["count"] > 0

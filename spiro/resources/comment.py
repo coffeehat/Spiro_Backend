@@ -4,7 +4,9 @@ from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
 from ..auth.multi_auth import multi_auth
-from ..db import get_comment, save_comment
+from ..common.exceptions import *
+from ..common.utils import get_time_stamp
+from ..db import User, Comment
 
 request_args = EasyDict()
 request_args.get = {
@@ -41,7 +43,42 @@ class CommentApi(Resource):
   def post(self, args):
     article_id  = args["article_id"]
     comment     = args["comment"]
+    user_id     = multi_auth.current_user()["id"]
     username    = multi_auth.current_user()["username"]
-    email       = multi_auth.current_user()["email"]
+    # email       = multi_auth.current_user()["email"]
 
-    return save_comment(article_id, username, comment)
+    return save_comment(article_id, user_id, username, comment)
+
+@handle_exception
+def save_comment(article_id, user_id, username, comment):
+  comment = Comment(
+    article_id = article_id,
+    user_id = user_id,
+    comment = comment,
+    timestamp = get_time_stamp()
+  )
+  comment_id = Comment.add_comment(comment)
+  return {
+    "article_id":   comment.article_id,
+    "username":     username,
+    "comment_id":   comment_id,
+    "comment_time": str(comment.timestamp),
+    "comment":      comment.comment,
+    "error_msg":    ""
+  }
+
+@handle_exception
+def get_comment(comment_id):
+  flag1, comment = Comment.find_comment_by_id(comment_id)
+  flag2, user = User.find_user_by_id(comment.user_id)
+  if flag1:
+    return {
+      "article_id":   comment.article_id,
+      "username":     user.name if flag2 else "Inactive",
+      "comment_id":   comment.id,
+      "comment_time": comment.timestamp,
+      "comment":      comment.comment,
+      "error_msg":    ""
+    }
+  else:
+    raise DbNotFound(f"Cannot find comment by comment id: {comment_id}")

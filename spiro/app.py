@@ -6,8 +6,7 @@ from .common.utils import singleton
 from .config import config
 from .resources import *
 
-from .db import db
-from .db import User
+from .db import db, User, Comment
 
 # @singleton
 class Server:
