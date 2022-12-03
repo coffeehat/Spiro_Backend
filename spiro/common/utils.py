@@ -18,7 +18,7 @@ email_pattern = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A
 def is_email(s):
   return re.match(email_pattern, s)
 
-def hash_password(password):
+def get_password_hash(password):
   return generate_password_hash(password)
 
 def verify_password(password, hash):

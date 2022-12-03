@@ -58,7 +58,7 @@ def save_comment(article_id, username, comment):
 
 db_users = {}
 
-from ..common.utils import hash_password, verify_password
+from ..common.utils import get_password_hash, verify_password
 
 @handle_exception
 def user_register(username, email, password):
@@ -71,7 +71,7 @@ def user_register(username, email, password):
       raise UserRegDupEmailException("Duplicate Email")
   
   # Save Password
-  hash = hash_password(password)
+  hash = get_password_hash(password)
   user_id = int(uuid.uuid4().hex, 16)
   db_users[user_id] = {
     'username': username,

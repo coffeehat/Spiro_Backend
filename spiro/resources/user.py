@@ -4,7 +4,7 @@ from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
 from ..common.utils import is_email
-from ..auth.auth import user_register, user_login
+from ..auth.user_manage import register_user, login_user
 
 
 request_args = {
@@ -30,6 +30,6 @@ class UserApi(Resource):
     password = args['password']
     if args["method"] == "register":
       email = args['email']
-      return user_register(username, email, password)
+      return register_user(username, email, password)
     elif args["method"] == "login":
-      return user_login(username, password)
+      return login_user(username, password)

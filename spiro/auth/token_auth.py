@@ -1,22 +1,17 @@
+from flask_httpauth import HTTPTokenAuth
 from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTError
 
+from ..common.exceptions import *
 from ..common.utils import get_expire_time
 from ..db.user import User
 
 SECERT_KEY = 'test'
 
-def generate_token(uid, seconds=20):
-  expire = get_expire_time(seconds)
+token_auth = HTTPTokenAuth('Bearer')
 
-  token = {
-    "exp": expire,
-    "uid": uid,
-    "sub": SECERT_KEY
-  }
-  return jwt.encode(claims=token, key=SECERT_KEY)
-
-def token_verify(token):
+@token_auth.verify_token
+def verify_token(token):
   try:
     payload = jwt.decode(token, SECERT_KEY)
     id = payload["uid"]
@@ -34,3 +29,20 @@ def token_verify(token):
     return None
   except:
     return None
+
+@token_auth.get_user_roles
+def get_user_roles(context):
+  if context["id"] == 0:
+    return "Visitor"
+  else:
+    return "Member"
+
+def generate_token(uid, seconds=20):
+  expire = get_expire_time(seconds)
+
+  token = {
+    "exp": expire,
+    "uid": uid,
+    "sub": SECERT_KEY
+  }
+  return jwt.encode(claims=token, key=SECERT_KEY)
