@@ -1,14 +1,42 @@
-from flask_httpauth import HTTPTokenAuth
+from flask import request
+from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTError
 
+from .user_manage import verify_user
+
 from ..common.exceptions import *
-from ..common.utils import get_expire_time
+from ..common.utils import get_expire_time, is_email
 from ..db.user import User
 
 SECERT_KEY = 'test'
 
+basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth('Bearer')
+multi_auth  = MultiAuth(basic_auth, token_auth)
+
+@basic_auth.verify_password
+def verify_pass(username_or_email, password):
+  # Support for visitors
+  if username_or_email == "" and password == "":
+    form = request.form
+    return {
+      "id":       0,
+      "username": form["username"] \
+        if "username" in form                           else "Anonymous",
+      "email":    form["email"]    \
+        if "email" and is_email(form["email"]) in form  else ""
+    }
+
+  flag, user = verify_user(username_or_email, password)
+  if flag:
+    return {
+      "id":       user.id, 
+      "username": user.username,
+      "email":    user.email
+    }
+  else:
+    return None
 
 @token_auth.verify_token
 def verify_token(token):
@@ -31,6 +59,7 @@ def verify_token(token):
     return None
 
 @token_auth.get_user_roles
+@basic_auth.get_user_roles
 def get_user_roles(context):
   if context["id"] == 0:
     return "Visitor"

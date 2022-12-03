@@ -3,7 +3,7 @@ from flask_restful import Resource, marshal_with, fields as restful_fields
 from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
-from ..auth.token_auth import token_auth
+from ..auth.api_auth import multi_auth
 from ..db import get_comment, save_comment
 
 request_args = EasyDict()
@@ -36,12 +36,12 @@ class CommentApi(Resource):
     return get_comment(comment_id)
 
   @use_args(request_args.post, location="form")
-  @token_auth.login_required(role=["Visitor", "Member"])
+  @multi_auth.login_required(role=["Visitor", "Member"])
   @marshal_with(response_fields.post)
   def post(self, args):
     article_id  = args["article_id"]
     comment     = args["comment"]
-    username    = token_auth.current_user()["username"]
-    email       = token_auth.current_user()["email"]
+    username    = multi_auth.current_user()["username"]
+    email       = multi_auth.current_user()["email"]
 
     return save_comment(article_id, username, comment)

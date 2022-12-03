@@ -1,4 +1,4 @@
-from .token_auth import generate_token
+from .api_auth import generate_token
 
 from ..common.exceptions import *
 from ..common.utils import get_password_hash, verify_password, get_time_stamp
