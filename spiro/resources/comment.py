@@ -3,7 +3,7 @@ from flask_restful import Resource, marshal_with, fields as restful_fields
 from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
-from ..auth.api_auth import multi_auth
+from ..auth.multi_auth import multi_auth
 from ..db import get_comment, save_comment
 
 request_args = EasyDict()

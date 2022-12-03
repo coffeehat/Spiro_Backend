@@ -3,8 +3,10 @@ from flask_restful import Resource, marshal_with, fields as restful_fields
 from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
-from ..common.utils import is_email
-from ..auth.user_manage import register_user, login_user
+from ..auth.token_auth import generate_token
+from ..common.exceptions import *
+from ..common.utils import get_password_hash, get_time_stamp, is_email
+from ..db.user import User
 
 
 request_args = {
@@ -33,3 +35,50 @@ class UserApi(Resource):
       return register_user(username, email, password)
     elif args["method"] == "login":
       return login_user(username, password)
+
+@handle_exception
+def register_user(username, email, password):
+  # Duplication test
+  if User.is_username_dup(username):
+    raise UserRegDupNameException("Duplicate User Name")
+  if User.is_email_dup(email):
+      raise UserRegDupEmailException("Duplicate Email")
+  
+  # Save info to db
+  user = User(
+    username = username,
+    email = email,
+    role  = "Member",
+    password = get_password_hash(password),
+    register_timestamp = get_time_stamp()
+  )
+  User.add_user(user)
+
+  return {
+    "error_code": 0,
+    "error_msg": "",
+    "status_code": 0,
+    "status_msg": "",
+    "token": ""
+  }
+
+@handle_exception
+def login_user(username, password):
+  flag, user = User.verify_user(username, password)
+  if (flag):
+    token = generate_token(user.id, seconds=1000)
+    return {
+      "error_code": 0,
+      "error_msg": "",
+      "status_code": 0,
+      "status_msg": "",
+      "token": token
+    }
+  else:
+    return {
+      "error_code": 0,
+      "error_msg": "",
+      "status_code": 0,
+      "status_msg": "",
+      "token": ""
+    }
