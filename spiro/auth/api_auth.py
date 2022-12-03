@@ -3,8 +3,6 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTError
 
-from .user_manage import verify_user
-
 from ..common.exceptions import *
 from ..common.utils import get_expire_time, is_email
 from ..db.user import User
@@ -28,7 +26,7 @@ def verify_pass(username_or_email, password):
         if "email" and is_email(form["email"]) in form  else ""
     }
 
-  flag, user = verify_user(username_or_email, password)
+  flag, user = User.verify_user(username_or_email, password)
   if flag:
     return {
       "id":       user.id, 

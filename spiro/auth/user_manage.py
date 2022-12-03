@@ -1,7 +1,7 @@
 from .api_auth import generate_token
 
 from ..common.exceptions import *
-from ..common.utils import get_password_hash, verify_password, get_time_stamp
+from ..common.utils import get_password_hash, get_time_stamp
 from ..db.user import User
 
 @handle_exception
@@ -32,7 +32,7 @@ def register_user(username, email, password):
 
 @handle_exception
 def login_user(username, password):
-  flag, user = verify_user(username, password)
+  flag, user = User.verify_user(username, password)
   if (flag):
     token = generate_token(user.id, seconds=1000)
     return {
@@ -50,10 +50,3 @@ def login_user(username, password):
       "status_msg": "",
       "token": ""
     }
-
-def verify_user(uname_or_email, password):
-  flag, user = User.find_user_by_username_or_email(uname_or_email)
-  if flag and verify_password(password, user.password):
-    return True, user
-  else:
-    return False, None

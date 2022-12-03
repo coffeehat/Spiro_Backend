@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 
 from ..db import db
-from ..common.utils import is_email
+from ..common.utils import is_email, verify_password
 
 class User(db.Model):
   id            = sa.Column(sa.Integer, primary_key=True)
@@ -76,3 +76,11 @@ class User(db.Model):
   def add_user(user):
     db.session.add(user)
     db.session.commit()
+
+  @staticmethod
+  def verify_user(uname_or_email, password):
+    flag, user = User.find_user_by_username_or_email(uname_or_email)
+    if flag and verify_password(password, user.password):
+      return True, user
+    else:
+      return False, None
