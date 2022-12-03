@@ -4,7 +4,7 @@ from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
 from ..common.utils import is_email
-from ..db.user import user_register, user_login
+from ..auth.auth import user_register, user_login
 
 
 request_args = {
