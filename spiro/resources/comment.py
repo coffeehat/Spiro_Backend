@@ -39,7 +39,7 @@ class CommentApi(Resource):
     return get_comment(comment_id)
 
   @use_args(request_args.post, location="form")
-  @multi_auth.login_required(role=[Role.Visitor, Role.Member, Role.Admin])
+  @multi_auth.login_required(role=[Role.Visitor.value, Role.Member.value, Role.Admin.value])
   @marshal_with(response_fields.post)
   def post(self, args):
     article_id  = args["article_id"]

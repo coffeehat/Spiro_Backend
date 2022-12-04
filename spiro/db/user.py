@@ -13,10 +13,9 @@ class User(db.Model):
   register_timestamp = sa.Column(sa.Integer)
 
   @staticmethod
-  def find_user_by_joint_username_and_email(username, email):
+  def find_user_by_username_and_email(username, email):
     user = db.session.execute(sa.select(User) \
-      .where(User.name == username) \
-      .where(User.email == email) \
+      .where(sa.and_(User.name == username, User.email == email)) \
       .limit(1)
     ).scalars().first()
     if user:
@@ -25,7 +24,17 @@ class User(db.Model):
       return False, None
 
   @staticmethod
-  def find_user_by_username_or_email(uname_or_email):
+  def find_user_by_username_or_email(username, email):
+    users = db.session.execute(sa.select(User) \
+      .where(sa.or_(User.name == username, User.email == email)) \
+    ).scalars().all()
+    if len(users):
+      return True, users
+    else:
+      return False, None
+
+  @staticmethod
+  def find_user_by_username_or_by_email(uname_or_email):
     if is_email(uname_or_email):
       return User.find_user_by_email(uname_or_email)
     else:
@@ -112,8 +121,17 @@ class User(db.Model):
     return user_id
 
   @staticmethod
+  def update_user(uid, user):
+    db.session.execute(
+      sa.update(User) \
+      .values(user) \
+      .where(User.id == uid) \
+    )
+    db.session.commit()
+
+  @staticmethod
   def verify_user(uname_or_email, password):
-    flag, user = User.find_user_by_username_or_email(uname_or_email)
+    flag, user = User.find_user_by_username_or_by_email(uname_or_email)
     if flag and verify_password(password, user.password):
       return True, user
     else:
