@@ -4,6 +4,7 @@ from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
 from ..auth.multi_auth import multi_auth
+from ..common.defs import Role
 from ..common.exceptions import *
 from ..common.utils import get_time_stamp
 from ..db import User, Comment
@@ -38,7 +39,7 @@ class CommentApi(Resource):
     return get_comment(comment_id)
 
   @use_args(request_args.post, location="form")
-  @multi_auth.login_required(role=["Visitor", "Member"])
+  @multi_auth.login_required(role=[Role.Visitor, Role.Member, Role.Admin])
   @marshal_with(response_fields.post)
   def post(self, args):
     article_id  = args["article_id"]

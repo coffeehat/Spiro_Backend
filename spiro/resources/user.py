@@ -5,6 +5,7 @@ from webargs.flaskparser import use_args
 
 from ..auth.token_auth import generate_token
 from ..common.exceptions import *
+from ..common.defs import Role
 from ..common.utils import get_password_hash, get_time_stamp, is_email
 from ..db.user import User
 
@@ -42,13 +43,13 @@ def register_user(username, email, password):
   if User.is_username_dup(username):
     raise UserRegDupNameException("Duplicate User Name")
   if User.is_email_dup(email):
-      raise UserRegDupEmailException("Duplicate Email")
+    raise UserRegDupEmailException("Duplicate Email")
   
   # Save info to db
   user = User(
     name = username,
     email = email,
-    role  = "Member",
+    role  = Role.Member,
     password = get_password_hash(password),
     register_timestamp = get_time_stamp()
   )

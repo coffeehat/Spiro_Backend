@@ -1,15 +1,28 @@
 import sqlalchemy as sa
 
 from ..db import db
+from ..common.defs import Role
 from ..common.utils import is_email, verify_password
 
 class User(db.Model):
   id            = sa.Column(sa.Integer, primary_key=True)
   name          = sa.Column(sa.String,  nullable=False, unique=True)
   email         = sa.Column(sa.String,  nullable=False, unique=True)
-  role          = sa.Column(sa.String,  nullable=False)
+  role          = sa.Column(sa.Integer, nullable=False)
   password      = sa.Column(sa.String)
   register_timestamp = sa.Column(sa.Integer)
+
+  @staticmethod
+  def find_user_by_joint_username_and_email(username, email):
+    user = db.session.execute(sa.select(User) \
+      .where(User.name == username) \
+      .where(User.email == email) \
+      .limit(1)
+    ).scalars().first()
+    if user:
+      return True, user
+    else:
+      return False, None
 
   @staticmethod
   def find_user_by_username_or_email(uname_or_email):
@@ -71,11 +84,32 @@ class User(db.Model):
       .limit(1)
     ).first()
     return ret["count"] > 0
-  
+
   @staticmethod
   def add_user(user):
     db.session.add(user)
     db.session.commit()
+
+  @staticmethod
+  def add_user_and_return_id(user):
+    ret = db.session.execute(
+      sa.text(
+        f"INSERT INTO {User.__table__.name} \
+          (name, email, role, password, register_timestamp) \
+          VALUES (:name, :email, :role, :password, :register_timestamp) \
+          RETURNING id"
+      ),
+      {
+        "name":               user.name, 
+        "email":              user.email,
+        "role":               user.role, 
+        "password":           user.password,
+        "register_timestamp": user.register_timestamp
+      }
+    ).first()
+    user_id = ret[0]
+    db.session.commit()
+    return user_id
 
   @staticmethod
   def verify_user(uname_or_email, password):
