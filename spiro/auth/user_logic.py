@@ -2,8 +2,12 @@
 from ..common.defs import Role
 from ..common.exceptions import *
 
-from ..common.utils import get_password_hash, get_time_stamp
+from ..common.utils import get_password_hash, get_time_stamp, verify_password
 from ..db import User
+
+"""
+!!! This is a logic hell of user management !!!
+"""
 
 class UserInfo:
   def __init__(self, id, name, email, role):
@@ -11,6 +15,13 @@ class UserInfo:
     self.name = name
     self.email = email
     self.role = role
+
+def verify_user(uname_or_email, password):
+  flag, user = User.find_user_by_username_or_by_email(uname_or_email)
+  if flag and verify_password(password, user.password):
+    return UserInfo(user.id, user.name, user.email, user.role)
+  else:
+    raise UserLoginException
 
 def register_user(username, email = None, password = None):
   """

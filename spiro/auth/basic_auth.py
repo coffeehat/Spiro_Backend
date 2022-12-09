@@ -1,7 +1,7 @@
 from flask import request
 from flask_httpauth import HTTPBasicAuth
 
-from .user_logic import register_user, UserInfo
+from .user_logic import register_user, verify_user
 
 from ..common.exceptions import *
 from ..db.user import User
@@ -24,12 +24,9 @@ def verify_pass(username_or_email, password):
     # Notice that this code branch shouldn't be executed because we have token authentication
     return _handle_registered(username_or_email, password)
 
+@handle_exception_tlocal
 def _handle_registered(username_or_email, password):
-  flag, user = User.verify_user(username_or_email, password)
-  if flag:
-    return UserInfo(user.id, user.name, user.email, user.role)
-  else:
-    return None # TODO: return user login failed
+  return verify_user(username_or_email, password)
 
 @handle_exception_tlocal
 def _handle_visitor(username, email):
