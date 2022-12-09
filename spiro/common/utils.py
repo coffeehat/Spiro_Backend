@@ -1,7 +1,13 @@
 import datetime
+import json
 import re
 
+from flask_restful import fields as restful_fields
+from jose import jwt
+from jose.exceptions import ExpiredSignatureError, JWTError
 from werkzeug.security import generate_password_hash, check_password_hash
+
+from .exceptions import UserLoginTokenExpired, UserLoginTokenSignException
 
 def singleton(cls):
   instances = {}
@@ -32,3 +38,30 @@ def get_time_stamp():
 
 def get_expire_time(expire_seconds):
   return datetime.datetime.utcnow() + datetime.timedelta(seconds=expire_seconds)
+
+class MarshalJsonItem(restful_fields.Raw):
+  def format(self, value):
+    # return json.dumps(value)
+    return value
+
+SECERT_KEY = 'test'
+
+def generate_token(uid, seconds=20):
+  expire = get_expire_time(seconds)
+
+  token = {
+    "exp": expire,
+    "uid": uid,
+    "sub": SECERT_KEY
+  }
+  return jwt.encode(claims=token, key=SECERT_KEY)
+
+def decode_token(token):
+  try:
+    return jwt.decode(token, SECERT_KEY)
+  except ExpiredSignatureError as e:
+    raise UserLoginTokenExpired
+  except JWTError as e:
+    raise UserLoginTokenSignException
+  except:
+    raise
