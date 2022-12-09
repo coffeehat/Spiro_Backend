@@ -6,7 +6,7 @@ from ..common.utils import is_email
 class User(db.Model):
   id            = sa.Column(sa.Integer, primary_key=True)
   name          = sa.Column(sa.String,  nullable=False, unique=True)
-  email         = sa.Column(sa.String,  nullable=False, unique=True)
+  email         = sa.Column(sa.String,  unique=True)
   role          = sa.Column(sa.Integer, nullable=False)
   password      = sa.Column(sa.String)
   register_timestamp = sa.Column(sa.Integer)

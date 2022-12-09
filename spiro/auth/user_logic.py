@@ -192,8 +192,9 @@ def _update_visitor_email(user_id, username, email):
 
 def _register_new_user(username, email, password = None):
   role = Role.Member.value              if password else Role.Visitor.value
-  hash = get_password_hash(password)    if password else ""
-  register_timestamp = get_time_stamp() if password else 0
+  hash = get_password_hash(password)    if password else None
+  register_timestamp = get_time_stamp() if password else None
+  email = email                         if email    else None
 
   user = User(
     name = username,

@@ -4,7 +4,6 @@ from flask_httpauth import HTTPBasicAuth
 from .user_logic import register_user, verify_user
 
 from ..common.exceptions import *
-from ..db.user import User
 
 basic_auth = HTTPBasicAuth()
 

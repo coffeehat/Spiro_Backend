@@ -23,6 +23,7 @@ request_args.post = {
 response_fields = EasyDict()
 response_fields.get = {
   "article_id":   restful_fields.Integer(default = 0),
+  "user_id":      restful_fields.Integer(default = 0),
   "username":     restful_fields.String(default = ""),
   "comment_id":   restful_fields.Integer(default = 0),
   "comment_time": restful_fields.String(default = ""),
@@ -34,7 +35,7 @@ response_fields.get = {
 response_fields.post = response_fields.get
 
 class CommentApi(Resource):
-  @use_args(request_args.get, location="form")
+  @use_args(request_args.get, location="query")
   @marshal_with(response_fields.get)
   def get(self, args):
     comment_id = args["comment_id"]
@@ -57,12 +58,14 @@ def save_comment(article_id, user_id, username, comment):
   comment = Comment(
     article_id = article_id,
     user_id = user_id,
+    user_name = username,
     comment = comment,
     timestamp = get_time_stamp()
   )
   comment_id = Comment.add_comment(comment)
   return {
     "article_id":   comment.article_id,
+    "user_id":      comment.user_id,
     "username":     username,
     "comment_id":   comment_id,
     "comment_time": str(comment.timestamp),
@@ -72,11 +75,11 @@ def save_comment(article_id, user_id, username, comment):
 @handle_exception
 def get_comment(comment_id):
   flag1, comment = Comment.find_comment_by_id(comment_id)
-  flag2, user = User.find_user_by_id(comment.user_id)
   if flag1:
     return {
       "article_id":   comment.article_id,
-      "username":     user.name if flag2 else Defaults.UserNameInactive.value,
+      "user_id":      comment.user_id,
+      "username":     comment.user_name,
       "comment_id":   comment.id,
       "comment_time": comment.timestamp,
       "comment":      comment.comment,
