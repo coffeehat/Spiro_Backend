@@ -27,6 +27,7 @@ class Server:
     self._add_resource()
   
   def _add_resource(self):
+    self.api.add_resource(CommentCountApi, "/" + config.version + "/comment_count")
     self.api.add_resource(CommentListApi, "/" + config.version + "/comment_list")
     self.api.add_resource(CommentApi, "/" + config.version + "/comment")
     self.api.add_resource(UserApi, "/" + config.version + "/user")

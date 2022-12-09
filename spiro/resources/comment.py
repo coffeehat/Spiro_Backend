@@ -7,7 +7,7 @@ from ..auth.multi_auth import multi_auth
 from ..common.defs import Role, Defaults
 from ..common.exceptions import *
 from ..common.utils import get_time_stamp, MarshalJsonItem
-from ..db import User, Comment
+from ..db import Comment
 
 request_args = EasyDict()
 request_args.get = {

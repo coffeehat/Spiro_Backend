@@ -36,6 +36,9 @@ def register_user(username, email = None, password = None):
   if not email and password:
     raise ArgNoEmailButHasPasswd
 
+  User.is_email_dup(email)
+  User.is_username_dup(username)
+
   if email:
     return _handle_registration_with_email(username, email, password)
   else:
