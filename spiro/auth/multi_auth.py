@@ -24,4 +24,4 @@ def handle_error(status):
 @token_auth.get_user_roles
 @basic_auth.get_user_roles
 def get_user_roles(context):
-  return context['role']
+  return context.role

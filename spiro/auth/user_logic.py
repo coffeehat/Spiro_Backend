@@ -5,6 +5,13 @@ from ..common.exceptions import *
 from ..common.utils import get_password_hash, get_time_stamp
 from ..db import User
 
+class UserInfo:
+  def __init__(self, id, name, email, role):
+    self.id = id
+    self.name = name
+    self.email = email
+    self.role = role
+
 def register_user(username, email = None, password = None):
   """
   Logics for registering user
@@ -39,12 +46,7 @@ def _handle_registration_with_email(username, email, password=None):
         return _update_visitor_to_registered(users[0].id, username, email, password)
       else:
         # We don't need password here, so we just return that user
-        return {
-          "id":       users[0].id,
-          "username": users[0].name,
-          "email":    users[0].email,
-          "role":     users[0].role
-        }
+        return UserInfo(users[0].id, users[0].name, users[0].email, users[0].role)
 
   if flag:
     # We find some users, but they either has different username or different email
@@ -137,12 +139,7 @@ def _handle_registration_without_email(username):
       and user.email == "":
     if user.role < Role.Visitor.value:
       pass # TODO: logging this abornal case, user with Role greater than Visitor shouldn't have empty email
-    return {
-      "id":       user.id,
-      "username": user.name,
-      "email":    user.email,
-      "role":     user.role
-    }
+    return UserInfo(user.id, user.name, user.email, user.role)
   
   if flag \
       and user.email != "":
@@ -171,12 +168,7 @@ def _update_visitor_to_registered(user_id, username, email, password):
       "register_timestamp": get_time_stamp()
     }
   )
-  return {
-    "id":       user_id,
-    "username": username,
-    "email":    email,
-    "role":     Role.Member.value
-  }
+  return UserInfo(user_id, username, email, Role.Member.value)
 
 def _update_visitor_email(user_id, username, email):
   User.update_user(
@@ -185,12 +177,7 @@ def _update_visitor_email(user_id, username, email):
       "email": email
     }
   )
-  return {
-    "id":       user_id,
-    "username": username,
-    "email":    email,
-    "role":     Role.Visitor.value
-  }
+  return UserInfo(user_id, username, email, Role.Visitor.value)
 
 def _register_new_user(username, email, password = None):
   role = Role.Member.value              if password else Role.Visitor.value
@@ -206,9 +193,4 @@ def _register_new_user(username, email, password = None):
   )
   id = User.add_user_and_return_id(user)
 
-  return {
-    "id":       id,
-    "username": username,
-    "email":    email,
-    "role":     role
-  }
+  return UserInfo(id, username, email, role)

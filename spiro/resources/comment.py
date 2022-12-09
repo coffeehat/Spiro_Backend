@@ -44,8 +44,8 @@ class CommentApi(Resource):
   def post(self, args):
     article_id  = args["article_id"]
     comment     = args["comment"]
-    user_id     = multi_auth.current_user()["id"]
-    username    = multi_auth.current_user()["username"]
+    user_id     = multi_auth.current_user().id
+    username    = multi_auth.current_user().name
     # email       = multi_auth.current_user()["email"]
 
     return save_comment(article_id, user_id, username, comment)

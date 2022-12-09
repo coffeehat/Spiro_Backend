@@ -1,5 +1,7 @@
 from flask_httpauth import HTTPTokenAuth
 
+from .user_logic import UserInfo
+
 from ..db.user import User
 from ..common.exceptions import *
 from ..common.utils import decode_token
@@ -16,9 +18,4 @@ def verify_token(token):
   flag, user = User.find_user_by_id(id)
   if not flag:
     raise DbNotFound
-  return {
-    "id":         id,
-    "username":   user.name,
-    "email":      user.email,
-    "role":       user.role
-  }
+  return UserInfo(id, user.name, user.email, user.role)
