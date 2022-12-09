@@ -4,9 +4,10 @@ from webargs.flaskparser import use_args
 
 from ..common.exceptions import *
 from ..auth.user_logic import register_user, verify_user
-from ..common.utils import is_email, generate_token, MarshalJsonItem
+from ..common.utils import generate_token, MarshalJsonItem
 from ..db.user import User
 
+# TODO: How to override webargs's error response?
 request_args = {
   "method":   webargs_fields.String(required=True),
   "password": webargs_fields.String(required=True, validate=validate.Length(min=1)),

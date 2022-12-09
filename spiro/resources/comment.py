@@ -4,9 +4,9 @@ from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
 from ..auth.multi_auth import multi_auth
-from ..common.defs import Role
+from ..common.defs import Role, Defaults
 from ..common.exceptions import *
-from ..common.utils import get_time_stamp
+from ..common.utils import get_time_stamp, MarshalJsonItem
 from ..db import User, Comment
 
 request_args = EasyDict()
@@ -22,12 +22,14 @@ request_args.post = {
 
 response_fields = EasyDict()
 response_fields.get = {
-  "article_id":   restful_fields.Integer(),
-  "username":     restful_fields.String(),
-  "comment_id":   restful_fields.Integer(),
-  "comment_time": restful_fields.String(),
-  "comment":      restful_fields.String(),
-  "error_msg":    restful_fields.String()
+  "article_id":   restful_fields.Integer(default = 0),
+  "username":     restful_fields.String(default = ""),
+  "comment_id":   restful_fields.Integer(default = 0),
+  "comment_time": restful_fields.String(default = ""),
+  "comment":      restful_fields.String(default = ""),
+  "error_code":   restful_fields.Integer(default = ErrorCode.EC_SUCCESS.value),
+  "error_hint":   MarshalJsonItem(default = ""),
+  "error_msg":    restful_fields.String(default = "")
 }
 response_fields.post = response_fields.get
 
@@ -65,7 +67,6 @@ def save_comment(article_id, user_id, username, comment):
     "comment_id":   comment_id,
     "comment_time": str(comment.timestamp),
     "comment":      comment.comment,
-    "error_msg":    ""
   }
 
 @handle_exception
@@ -75,11 +76,10 @@ def get_comment(comment_id):
   if flag1:
     return {
       "article_id":   comment.article_id,
-      "username":     user.name if flag2 else "Inactive",
+      "username":     user.name if flag2 else Defaults.UserNameInactive.value,
       "comment_id":   comment.id,
       "comment_time": comment.timestamp,
       "comment":      comment.comment,
-      "error_msg":    ""
     }
   else:
-    raise DbNotFound(f"Cannot find comment by comment id: {comment_id}")
+    raise DbNotFound(error_msg = f"Cannot find comment by comment id: {comment_id}")
