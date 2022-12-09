@@ -43,7 +43,7 @@ def get_comment_list(article_id, offset, length):
   if length < 0:
     raise ArgInvalid("length is less than 0")
 
-  flag, comments = Comment.find_rangeof_comments_by_article_id_with_output_name(article_id, offset, length)
+  flag, comments = Comment.find_rangeof_comments_by_article_id(article_id, offset, length)
   if flag:
     return {
       "article_id": article_id,

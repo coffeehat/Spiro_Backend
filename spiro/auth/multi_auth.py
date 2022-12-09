@@ -4,6 +4,7 @@ from flask_restful import marshal
 
 from .basic_auth import basic_auth
 from .token_auth import token_auth
+from .user_logic import UserInfo
 
 from ..common.exceptions import *
 from ..resources.user import response_fields as user_response_fields
@@ -23,5 +24,5 @@ def handle_error(status):
 
 @token_auth.get_user_roles
 @basic_auth.get_user_roles
-def get_user_roles(context):
-  return context.role
+def get_user_roles(context : UserInfo):
+  return context.user_role

@@ -14,8 +14,8 @@ token_auth = HTTPTokenAuth('Bearer')
 @handle_exception_tlocal
 def verify_token(token):
   payload = decode_token(token)
-  id = payload["uid"]
-  flag, user = User.find_user_by_id(id)
+  user_id = payload["uid"]
+  flag, user = User.find_user_by_id(user_id)
   if not flag:
     raise DbNotFound
-  return UserInfo(id, user.name, user.email, user.role)
+  return UserInfo(user_id, user.user_name, user.user_email, user.user_role)

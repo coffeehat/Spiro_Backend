@@ -10,57 +10,57 @@ from ..db import User
 """
 
 class UserInfo:
-  def __init__(self, id, name, email, role):
-    self.id = id
-    self.name = name
-    self.email = email
-    self.role = role
+  def __init__(self, user_id, user_name, user_email, user_role):
+    self.user_id = user_id
+    self.user_name = user_name
+    self.user_email = user_email
+    self.user_role = user_role
 
-def verify_user(uname_or_email, password):
-  flag, user = User.find_user_by_username_or_by_email(uname_or_email)
-  if flag and verify_password(password, user.password):
-    return UserInfo(user.id, user.name, user.email, user.role)
+def verify_user(user_name_or_email, user_passwd):
+  flag, user = User.find_user_by_username_or_by_email(user_name_or_email)
+  if flag and verify_password(user_passwd, user.user_passwd):
+    return UserInfo(user.user_id, user.user_name, user.user_email, user.user_role)
   else:
     raise UserLoginException
 
-def register_user(username, email = None, password = None):
+def register_user(user_name, user_email = None, user_passwd = None):
   """
   Logics for registering user
   * If only username is provided, we register a visitor without email
   * If username and email are provided, we register a vistor with email
   * If username/email/password are provided, we register a member
   """
-  if not username:
+  if not user_name:
     raise ArgNoUsername
 
-  if not email and password:
+  if not user_email and user_passwd:
     raise ArgNoEmailButHasPasswd
 
-  User.is_email_dup(email)
-  User.is_username_dup(username)
+  User.is_email_dup(user_email)
+  User.is_username_dup(user_name)
 
-  if email:
-    return _handle_registration_with_email(username, email, password)
+  if user_email:
+    return _handle_registration_with_email(user_name, user_email, user_passwd)
   else:
-    return _handle_registration_without_email(username)
+    return _handle_registration_without_email(user_name)
 
-def _handle_registration_with_email(username, email, password=None):
-  flag, users = User.find_user_by_username_or_email(username, email)
+def _handle_registration_with_email(user_name, user_email, user_passwd=None):
+  flag, users = User.find_users_by_username_or_email(user_name, user_email)
   
   if flag \
       and len(users) == 1 \
-      and users[0].name == username \
-      and users[0].email == email:
+      and users[0].user_name == user_name \
+      and users[0].user_email == user_email:
     # We find the very user who has same username and email!
-    if users[0].role < Role.Visitor.value:
+    if users[0].user_role < Role.Visitor.value:
       raise UserRegDupBothNameAndEmailException
     else:
-      if password:
+      if user_passwd:
         # We need to update the password to this visitor, that is turn the visitor into a member
-        return _update_visitor_to_registered(users[0].id, username, email, password)
+        return _update_visitor_to_registered(users[0].user_id, user_name, user_email, user_passwd)
       else:
         # We don't need password here, so we just return that user
-        return UserInfo(users[0].id, users[0].name, users[0].email, users[0].role)
+        return UserInfo(users[0].user_id, users[0].user_name, users[0].user_email, users[0].user_role)
 
   if flag:
     # We find some users, but they either has different username or different email
@@ -69,41 +69,41 @@ def _handle_registration_with_email(username, email, password=None):
     name_dup = None
     email_dup = None
     for user in users:
-      if user.name == username:
+      if user.user_name == user_name:
         name_dup = user
         continue
-      if user.email == email:
+      if user.user_email == user_email:
         email_dup = user
         continue
     
     if name_dup and email_dup:
-      if name_dup.role < Role.Visitor.value and email_dup.role < Role.Visitor.value:
+      if name_dup.user_role < Role.Visitor.value and email_dup.user_role < Role.Visitor.value:
         raise UserRegDupBothNameAndEmailException
-      elif name_dup.role < Role.Visitor.value and email_dup.role >= Role.Visitor.value:
+      elif name_dup.user_role < Role.Visitor.value and email_dup.user_role >= Role.Visitor.value:
         # TODO: suggest to change the name to the dup one
         # Duplicate User Name with a member, dup E-mail with visitor whose name is xxx
         raise UserRegDupBothNameAndEmailException(
             error_hint = {
               "dup.name": {
                 "role": Role.Visitor.value,
-                "name": email_dup.name,
+                "name": email_dup.user_name,
               }},
-            error_msg = f"Dup E-mail with a visitor whose name is {email_dup.name}"
+            error_msg = f"Dup E-mail with a visitor whose name is {email_dup.user_name}"
           )
-      elif name_dup.role >= Role.Visitor.value and email_dup.role < Role.Visitor.value:
-        if name_dup.email == "":
+      elif name_dup.user_role >= Role.Visitor.value and email_dup.user_role < Role.Visitor.value:
+        if name_dup.user_email == "":
           raise UserRegDupEmailException
         else:
           raise UserRegDupBothNameAndEmailException
       else:
-        if name_dup.email == "":
+        if name_dup.user_email == "":
           raise UserRegDupEmailException(
             error_hint = {
               "dup.name": {
                 "role": Role.Visitor.value,
-                "name": email_dup.name,
+                "name": email_dup.user_name,
               }},
-            error_msg = f"Dup E-mail with a visitor whose name is {email_dup.name}"
+            error_msg = f"Dup E-mail with a visitor whose name is {email_dup.user_name}"
           )
         else:
           # TODO: suggest to change the name to the dup one or correct you email
@@ -111,25 +111,25 @@ def _handle_registration_with_email(username, email, password=None):
             error_hint = {
               "dup.name": {
                 "role": Role.Visitor.value,
-                "name": email_dup.name,
+                "name": email_dup.user_name,
               }},
-            error_msg = f"Duplicate User Name with a vistor, dup E-mail with a visitor whose name is {email_dup.name}"
+            error_msg = f"Duplicate User Name with a vistor, dup E-mail with a visitor whose name is {email_dup.user_name}"
           )
 
     if name_dup:
-      if name_dup.role < Role.Visitor.value:
+      if name_dup.user_role < Role.Visitor.value:
         raise UserRegDupNameException
       else:
-        if name_dup.email == "":
-          if password:
-            return _update_visitor_to_registered(name_dup.id, username, email, password)
+        if name_dup.user_email == "":
+          if user_passwd:
+            return _update_visitor_to_registered(name_dup.user_id, user_name, user_email, user_passwd)
           else:
-            return _update_visitor_email(name_dup.id, username, email)
+            return _update_visitor_email(name_dup.user_id, user_name, user_email)
         else:
           raise UserRegDupNameException
 
     if email_dup:
-      if email_dup.role < Role.Visitor.value:
+      if email_dup.user_role < Role.Visitor.value:
         raise UserRegDupEmailException
       else:
         # TODO: suggest to change the name to the dup one
@@ -137,75 +137,75 @@ def _handle_registration_with_email(username, email, password=None):
             error_hint = {
               "dup.name": {
                 "role": Role.Visitor.value,
-                "name": email_dup.name,
+                "name": email_dup.user_name,
               }},
-            error_msg = f"Dup E-mail with a visitor whose name is {email_dup.name}"
+            error_msg = f"Dup E-mail with a visitor whose name is {email_dup.user_name}"
           )
 
     raise InternalError  # TODO: logging this abnormal case, the code path shouldn't be run here
   else:
-    return _register_new_user(username, email, password)
+    return _register_new_user(user_name, user_email, user_passwd)
 
 
-def _handle_registration_without_email(username):
-  flag, user = User.find_user_by_username(username)
+def _handle_registration_without_email(user_name):
+  flag, user = User.find_user_by_username(user_name)
   if flag \
-      and user.email == "":
-    if user.role < Role.Visitor.value:
+      and user.user_email == "":
+    if user.user_role < Role.Visitor.value:
       pass # TODO: logging this abornal case, user with Role greater than Visitor shouldn't have empty email
-    return UserInfo(user.id, user.name, user.email, user.role)
+    return UserInfo(user.user_id, user.user_name, user.user_mail, user.user_role)
   
   if flag \
-      and user.email != "":
-    if user.role < Role.Visitor.value:
+      and user.user_email != "":
+    if user.user_role < Role.Visitor.value:
       raise UserRegDupNameException (
-        error_msg = f"{username} is taken by a member"
+        error_msg = f"{user_name} is taken by a member"
       )
     else:
       raise UserRegDupNameException (
-        error_msg = f"{username} is taken by a visitor"
+        error_msg = f"{user_name} is taken by a visitor"
       )
   
   if not flag:
-    return _register_new_user(username, "")
+    return _register_new_user(user_name, "")
 
   return None # TODO: logging this abnormal case, the code path shouldn't be run here
 
-def _update_visitor_to_registered(user_id, username, email, password):
+def _update_visitor_to_registered(user_id, user_name, user_email, user_passwd):
   User.update_user(
     user_id,
     {
-      "name": username,
-      "email": email,
-      "role": Role.Member.value,
-      "password": get_password_hash(password),
-      "register_timestamp": get_time_stamp()
+      "user_name": user_name,
+      "user_email": user_email,
+      "user_role": Role.Member.value,
+      "user_passwd": get_password_hash(user_passwd),
+      "user_register_timestamp": get_time_stamp()
     }
   )
-  return UserInfo(user_id, username, email, Role.Member.value)
+  return UserInfo(user_id, user_name, user_email, Role.Member.value)
 
-def _update_visitor_email(user_id, username, email):
+def _update_visitor_email(user_id, user_name, user_email):
   User.update_user(
     user_id,
     {
-      "email": email
+      "user_email": user_email
     }
   )
-  return UserInfo(user_id, username, email, Role.Visitor.value)
+  return UserInfo(user_id, user_name, user_email, Role.Visitor.value)
 
-def _register_new_user(username, email, password = None):
-  role = Role.Member.value              if password else Role.Visitor.value
-  hash = get_password_hash(password)    if password else None
-  register_timestamp = get_time_stamp() if password else None
-  email = email                         if email    else None
+def _register_new_user(user_name, user_email, user_passwd = None):
+  user_role = Role.Member.value                 if user_passwd else Role.Visitor.value
+  user_hash = get_password_hash(user_passwd)    if user_passwd else None
+  user_register_timestamp = get_time_stamp()    if user_passwd else None
+  user_email = user_email                       if user_email  else None
 
   user = User(
-    name = username,
-    email = email,
-    role  = role,
-    password = hash,
-    register_timestamp = register_timestamp
+    user_name = user_name,
+    user_email = user_email,
+    user_role  = user_role,
+    user_passwd = user_hash,
+    user_register_timestamp = user_register_timestamp
   )
-  id = User.add_user_and_return_id(user)
+  user_id = User.add_user_and_return_id(user)
 
-  return UserInfo(id, username, email, role)
+  return UserInfo(user_id, user_name, user_email, user_role)
