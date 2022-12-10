@@ -6,7 +6,7 @@ from webargs.flaskparser import use_args
 from ..auth.multi_auth import multi_auth
 from ..common.defs import Role, Defaults
 from ..common.exceptions import *
-from ..common.utils import get_time_stamp, MarshalJsonItem
+from ..common.utils import get_utc_timestamp, MarshalJsonItem
 from ..db import Comment
 
 request_args = EasyDict()
@@ -20,18 +20,21 @@ request_args.post = {
   "user_email":         webargs_fields.String()
 }
 
-response_fields = EasyDict()
-response_fields.get = {
+comment_response_fields_without_error = {
   "article_id":         restful_fields.Integer(default = 0),
   "user_id":            restful_fields.Integer(default = 0),
   "user_name":          restful_fields.String(default = ""),
   "comment_id":         restful_fields.Integer(default = 0),
   "comment_timestamp":  restful_fields.String(default = ""),
   "comment_content":    restful_fields.String(default = ""),
+}
+response_fields = EasyDict()
+response_fields.get = {
   "error_code":         restful_fields.Integer(default = ErrorCode.EC_SUCCESS.value),
   "error_hint":         MarshalJsonItem(default = ""),
   "error_msg":          restful_fields.String(default = "")
 }
+response_fields.get.update(comment_response_fields_without_error)
 response_fields.post = response_fields.get
 
 class CommentApi(Resource):
@@ -60,7 +63,7 @@ def save_comment(article_id, user_id, user_name, comment_content):
     user_id = user_id,
     user_name = user_name,
     comment_content = comment_content,
-    comment_timestamp = get_time_stamp()
+    comment_timestamp = get_utc_timestamp()
   )
   comment_id = Comment.add_comment(comment)
   return {

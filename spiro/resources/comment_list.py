@@ -3,7 +3,7 @@ from flask_restful import Resource, marshal_with, fields as restful_fields
 from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
-from .comment import response_fields as comment_response_fields
+from .comment import comment_response_fields_without_error
 
 from ..common.exceptions import *
 from ..common.utils import MarshalJsonItem
@@ -19,7 +19,7 @@ request_args.get = {
 response_fields = EasyDict()
 response_fields.get = {
   "article_id":   restful_fields.Integer(),
-  "comment_list": restful_fields.List(restful_fields.Nested(comment_response_fields.get)),
+  "comment_list": restful_fields.List(restful_fields.Nested(comment_response_fields_without_error)),
   "error_code":   restful_fields.Integer(default = ErrorCode.EC_SUCCESS.value),
   "error_hint":   MarshalJsonItem(default = ""),
   "error_msg":    restful_fields.String(default = "")

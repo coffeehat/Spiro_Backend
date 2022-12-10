@@ -45,7 +45,7 @@ class Comment(db.Model):
 
   @staticmethod
   def find_rangeof_comments_by_article_id(article_id, offset, length):
-    if length < 0 or length is None:
+    if length <= 0 or length is None:
       comments = db.session.execute(sa.select(Comment) \
         .where(Comment.article_id == article_id) \
         .order_by(Comment.comment_timestamp.desc()) \

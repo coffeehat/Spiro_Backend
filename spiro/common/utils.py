@@ -1,7 +1,7 @@
 import datetime
-import json
 import re
 
+from datetime import timezone
 from flask_restful import fields as restful_fields
 from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTError
@@ -31,17 +31,25 @@ def verify_password(password, hash):
   return check_password_hash(hash, password)
 
 def get_current_time():
-  return datetime.datetime.now()
+  return datetime.datetime.utcnow()
 
-def get_time_stamp():
-  return get_current_time().timestamp()
+def get_utc_timestamp():
+  dt = get_current_time()
+  return convert_time_2_utc_timestamp(dt)
+
+def convert_time_2_utc_timestamp(dt):
+  utc_time = dt.replace(tzinfo=timezone.utc)
+  return utc_time.timestamp()
 
 def get_expire_time(expire_seconds):
-  return datetime.datetime.utcnow() + datetime.timedelta(seconds=expire_seconds)
+  return get_current_time() + datetime.timedelta(seconds=expire_seconds)
+
+def convert_expire_time_to_cookies_expire_string(dt):
+  utc_time = dt.replace(tzinfo=timezone.utc)
+  return utc_time.strftime("%a, %d %b %Y %H:%M:%S GMT")
 
 class MarshalJsonItem(restful_fields.Raw):
   def format(self, value):
-    # return json.dumps(value)
     return value
 
 SECERT_KEY = 'test'

@@ -2,7 +2,7 @@
 from ..common.defs import Role
 from ..common.exceptions import *
 
-from ..common.utils import get_password_hash, get_time_stamp, verify_password
+from ..common.utils import get_password_hash, get_utc_timestamp, verify_password
 from ..db import User
 
 """
@@ -179,7 +179,7 @@ def _update_visitor_to_registered(user_id, user_name, user_email, user_passwd):
       "user_email": user_email,
       "user_role": Role.Member.value,
       "user_passwd": get_password_hash(user_passwd),
-      "user_register_timestamp": get_time_stamp()
+      "user_register_timestamp": get_utc_timestamp()
     }
   )
   return UserInfo(user_id, user_name, user_email, Role.Member.value)
@@ -196,7 +196,7 @@ def _update_visitor_email(user_id, user_name, user_email):
 def _register_new_user(user_name, user_email, user_passwd = None):
   user_role = Role.Member.value                 if user_passwd else Role.Visitor.value
   user_hash = get_password_hash(user_passwd)    if user_passwd else None
-  user_register_timestamp = get_time_stamp()    if user_passwd else None
+  user_register_timestamp = get_utc_timestamp()    if user_passwd else None
   user_email = user_email                       if user_email  else None
 
   user = User(

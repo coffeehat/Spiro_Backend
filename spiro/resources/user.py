@@ -19,11 +19,13 @@ response_fields = {
   "error_code": restful_fields.Integer(default = ErrorCode.EC_SUCCESS.value),
   "error_hint": MarshalJsonItem(default = ""),
   "error_msg":  restful_fields.String(default = ""),
-  "token":      restful_fields.String(default = "")
+  "token":      restful_fields.String(default = ""),
+  "token_expire": restful_fields.Integer(default = 0),
+  "user_name":  restful_fields.String(default = "")
 }
 
 class UserApi(Resource):
-  @use_args(request_args, location="json")
+  @use_args(request_args, location="form")
   @marshal_with(response_fields)
   def post(self, args):
     user_name = args['user_name']
@@ -48,7 +50,9 @@ def _register_user(user_name, user_email, user_passwd):
 @handle_exception
 def _login_user(user_name, user_passwd):
   user = verify_user(user_name, user_passwd)
-  token = generate_token(user.user_id, seconds=1000)
+  token = generate_token(user.user_id, seconds=10)
   return {
-    "token": token
+    "token": token,
+    "token_expire": 10,
+    "user_name": user.user_name
   }

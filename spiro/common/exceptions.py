@@ -12,7 +12,7 @@ def handle_exception(func):
       return e.get_error_info(), e.get_http_status()
     except Exception as e:
       return {"error_code": ErrorCode.EC_GENERIC_ERROR.value}, 500
-    return comment, 200
+    return comment
   return wrapper
 
 def handle_exception_tlocal(func):

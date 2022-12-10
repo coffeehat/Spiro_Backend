@@ -12,7 +12,10 @@ from .db import db, User, Comment
 class Server:
   def __init__(self):
     self.app = Flask(config.app_name)
-    CORS(self.app, supports_credentials=True)
+    CORS(
+      self.app,
+      supports_credentials=True
+    )
     self.api = Api(self.app)
 
     # Database related
