@@ -20,7 +20,7 @@ response_fields = {
   "error_hint": MarshalJsonItem(default = ""),
   "error_msg":  restful_fields.String(default = ""),
   "token":      restful_fields.String(default = ""),
-  "token_expire": restful_fields.Integer(default = 0),
+  "token_expire_timestamp": restful_fields.String(default = ""),
   "user_name":  restful_fields.String(default = "")
 }
 
@@ -50,9 +50,9 @@ def _register_user(user_name, user_email, user_passwd):
 @handle_exception
 def _login_user(user_name, user_passwd):
   user = verify_user(user_name, user_passwd)
-  token = generate_token(user.user_id, seconds=10)
+  token, expire = generate_token(user.user_id, seconds=10)
   return {
     "token": token,
-    "token_expire": 10,
+    "token_expire_timestamp": expire,
     "user_name": user.user_name
   }

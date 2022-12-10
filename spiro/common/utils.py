@@ -62,7 +62,7 @@ def generate_token(uid, seconds=20):
     "uid": uid,
     "sub": SECERT_KEY
   }
-  return jwt.encode(claims=token, key=SECERT_KEY)
+  return jwt.encode(claims=token, key=SECERT_KEY), convert_time_2_utc_timestamp(expire)
 
 def decode_token(token):
   try:
