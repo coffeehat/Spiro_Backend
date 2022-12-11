@@ -24,8 +24,7 @@ def verify_user(user_name_or_email, user_passwd):
       raise UserLoginAsVisitorError
     if verify_password(user_passwd, user.user_passwd):
       return UserInfo(user.user_id, user.user_name, user.user_email, user.user_role)
-  else:
-    raise UserLoginException
+  raise UserLoginException
 
 def register_user(user_name, user_email = None, user_passwd = None):
   """
