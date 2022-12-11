@@ -6,7 +6,7 @@ from .common.utils import singleton
 from .config import config
 from .resources import *
 
-from .db import db, User, Comment
+from .db import db
 
 # @singleton
 class Server:
@@ -34,6 +34,7 @@ class Server:
     self.api.add_resource(CommentListApi, "/" + config.version + "/comment_list")
     self.api.add_resource(CommentApi, "/" + config.version + "/comment")
     self.api.add_resource(UserApi, "/" + config.version + "/user")
+    self.api.add_resource(TokenCheckApi, "/" + config.version + "/token_check")
 
   def run(self):
     self.app.run()

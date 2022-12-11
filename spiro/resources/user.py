@@ -50,7 +50,7 @@ def _register_user(user_name, user_email, user_passwd):
 @handle_exception
 def _login_user(user_name, user_passwd):
   user = verify_user(user_name, user_passwd)
-  token, expire = generate_token(user.user_id, seconds=10)
+  token, expire = generate_token(user.user_id, seconds=1000)
   return {
     "token": token,
     "token_expire_timestamp": expire,
