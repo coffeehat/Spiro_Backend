@@ -41,6 +41,7 @@ class ErrorCode(enum.Enum):
   EC_ARG_INVALID_ERROR = 101
   EC_ARG_NOUSERNAME_ERROR = 102
   EC_ARG_NOEMAIL_BUT_HASPASSWD_ERROR = 103
+  EC_ARG_EMPTY_COMMENT = 104
 
   # Database Error
   EC_DB_GENERIC_ERROR = 200
@@ -54,9 +55,23 @@ class ErrorCode(enum.Enum):
   EC_USER_REG_DUP_EMAIL_ERROR = 303
   EC_USER_REG_DUP_BOTH_NAME_EMAIL_ERROR = 304
 
+  EC_VISITOR_REG_DUP_BOTH_NAME_EMAIL_WITH_MEMBER_ERROR = 305
+  EC_VISITOR_REG_DUP_NAME_WITH_MEMBER_DUP_EMAIL_WITH_VISITOR = 306
+  EC_VISIOTR_REG_DUP_EMAIL_WITH_MEMBER = 307
+  EC_VISITOR_REG_DUP_NAME_WITH_VISITOR_DUP_EMAIL_WITH_MEMBER = 308
+  EC_VISIOTR_REG_DUP_EMAIL_WITH_VISITOR = 309
+  EC_VISIOTR_REG_DUP_BOTH_NAME_EMAIL_WITH_VISITOR_ERROR = 310
+  EC_VISITOR_REG_DUP_NAME_WITH_MEMBER = 311
+
   EC_USER_LOGIN_ERROR = 350
   EC_USER_LOGIN_TOKEN_EXPIRED = 351
   EC_USER_LOGIN_TOKEN_SIGN_ERROR = 352
+  
+  EC_VISITOR_LOGIN_ERROR = 370
+  EC_VISITOR_LOGIN_NEED_EMAIL = 371
+  EC_VISITOR_LOGIN_NAME_CONLICT_WITH_MEMBER = 372
+  EC_VISITOR_LOGIN_UNMATCHED_EMIAL_WITH_NAME = 373
+  EC_VISITOR_LOGIN_NEED_PASSWD_AUTHENTICATION = 374
 
   EC_USER_UNAUTHORIZED_ERROR = 399
 
@@ -135,6 +150,15 @@ class ArgNoEmailButHasPasswd(ArgException):
       http_status_code = 403
     )
 
+class ArgEmptyComment(ArgException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_ARG_EMPTY_COMMENT,
+      http_status_code = 403
+    )
+
 # Exceptions for Db
 
 class DbException(CommonException):
@@ -202,6 +226,69 @@ class UserRegDupBothNameAndEmailException(UserRegisterException):
       http_status_code = 400
     )
 
+class VisitorRegDupBothNameEmailWithMemberException(UserRegisterException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_VISITOR_REG_DUP_BOTH_NAME_EMAIL_WITH_MEMBER_ERROR,
+      http_status_code = 400
+    )
+
+class VisitorRegDupNameWithMemberDupEmailWithVisitor(UserRegisterException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_VISITOR_REG_DUP_NAME_WITH_MEMBER_DUP_EMAIL_WITH_VISITOR,
+      http_status_code = 400
+    )
+
+class VisitorRegDupEmailWithMember(UserRegisterException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_VISIOTR_REG_DUP_EMAIL_WITH_MEMBER,
+      http_status_code = 400
+    )
+
+class VisitorRegDupNameWithVisitorDupEmailWithMember(UserRegisterException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_VISITOR_REG_DUP_NAME_WITH_VISITOR_DUP_EMAIL_WITH_MEMBER,
+      http_status_code = 400
+    )
+
+class VisitorRegDupEmailWithVisitor(UserRegisterException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_VISIOTR_REG_DUP_EMAIL_WITH_VISITOR,
+      http_status_code = 400
+    )
+
+class VisitorRegDupBothNameEmailWithVisitorException(UserRegisterException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_VISIOTR_REG_DUP_BOTH_NAME_EMAIL_WITH_VISITOR_ERROR,
+      http_status_code = 400
+    )
+
+class VisitorRegDupNameWithMemberException(UserRegisterException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_VISITOR_REG_DUP_NAME_WITH_MEMBER,
+      http_status_code = 400
+    )
+
 class UserLoginException(CommonException):
   def __init__(self, error_hint = "", error_msg = ""):
     super(CommonException, self).__init__(
@@ -226,6 +313,51 @@ class UserLoginTokenSignException(UserLoginException):
       error_hint = error_hint,
       error_msg  = error_msg,
       error_code = ErrorCode.EC_USER_LOGIN_TOKEN_SIGN_ERROR,
+      http_status_code = 400
+    )
+
+class VisitorLoginException(UserLoginException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_VISITOR_LOGIN_ERROR,
+      http_status_code = 400
+    )
+
+class VisitorLoginNeedEmail(UserLoginException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_VISITOR_LOGIN_NEED_EMAIL,
+      http_status_code = 400
+    )
+
+class VisitorLoginNameConflictWithMember(UserLoginException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_VISITOR_LOGIN_NAME_CONLICT_WITH_MEMBER,
+      http_status_code = 400
+    )
+
+class VisitorLoginUnmatchedEmailWithName(UserLoginException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_VISITOR_LOGIN_UNMATCHED_EMIAL_WITH_NAME,
+      http_status_code = 400
+    )
+
+class VisitorLoginNeedPasswordAuthentication(UserLoginException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_VISITOR_LOGIN_NEED_PASSWD_AUTHENTICATION,
       http_status_code = 400
     )
 

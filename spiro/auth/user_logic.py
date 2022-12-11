@@ -36,9 +36,6 @@ def register_user(user_name, user_email = None, user_passwd = None):
   if not user_email and user_passwd:
     raise ArgNoEmailButHasPasswd
 
-  User.is_email_dup(user_email)
-  User.is_username_dup(user_name)
-
   if user_email:
     return _handle_registration_with_email(user_name, user_email, user_passwd)
   else:
@@ -53,7 +50,10 @@ def _handle_registration_with_email(user_name, user_email, user_passwd=None):
       and users[0].user_email == user_email:
     # We find the very user who has same username and email!
     if users[0].user_role < Role.Visitor.value:
-      raise UserRegDupBothNameAndEmailException
+      if user_passwd:
+        raise UserRegDupBothNameAndEmailException
+      else:
+        raise VisitorLoginNeedPasswordAuthentication
     else:
       if user_passwd:
         # We need to update the password to this visitor, that is turn the visitor into a member
@@ -78,69 +78,88 @@ def _handle_registration_with_email(user_name, user_email, user_passwd=None):
     
     if name_dup and email_dup:
       if name_dup.user_role < Role.Visitor.value and email_dup.user_role < Role.Visitor.value:
-        raise UserRegDupBothNameAndEmailException
+        if user_passwd:
+          raise UserRegDupBothNameAndEmailException
+        else:
+          raise VisitorRegDupBothNameEmailWithMemberException
       elif name_dup.user_role < Role.Visitor.value and email_dup.user_role >= Role.Visitor.value:
         # TODO: suggest to change the name to the dup one
         # Duplicate User Name with a member, dup E-mail with visitor whose name is xxx
-        raise UserRegDupBothNameAndEmailException(
-            error_hint = {
-              "dup.name": {
-                "role": Role.Visitor.value,
-                "name": email_dup.user_name,
-              }},
-            error_msg = f"Dup E-mail with a visitor whose name is {email_dup.user_name}"
-          )
-      elif name_dup.user_role >= Role.Visitor.value and email_dup.user_role < Role.Visitor.value:
-        if name_dup.user_email == "":
-          raise UserRegDupEmailException
+        error_hint = {
+          "dup.name": {
+            "user_role": Role.Visitor.value,
+            "user_name": email_dup.user_name,
+          }}
+        if user_passwd:
+          raise UserRegDupBothNameAndEmailException(error_hint = error_hint)
         else:
-          raise UserRegDupBothNameAndEmailException
+          raise VisitorRegDupNameWithMemberDupEmailWithVisitor(error_hint = error_hint)
+      elif name_dup.user_role >= Role.Visitor.value and email_dup.user_role < Role.Visitor.value:
+        if not name_dup.user_email:
+          if user_passwd:
+            raise UserRegDupEmailException
+          else:
+            raise VisitorRegDupEmailWithMember
+        else:
+          if user_passwd:
+            raise UserRegDupBothNameAndEmailException
+          else:
+            raise VisitorRegDupNameWithVisitorDupEmailWithMember
       else:
-        if name_dup.user_email == "":
-          raise UserRegDupEmailException(
-            error_hint = {
-              "dup.name": {
-                "role": Role.Visitor.value,
-                "name": email_dup.user_name,
-              }},
-            error_msg = f"Dup E-mail with a visitor whose name is {email_dup.user_name}"
-          )
+        if not name_dup.user_email:
+          error_hint = {
+            "dup.name": {
+              "user_role": Role.Visitor.value,
+              "user_name": email_dup.user_name,
+          }}
+          if user_passwd:
+            raise UserRegDupEmailException(error_hint = error_hint)
+          else:
+            raise VisitorRegDupEmailWithVisitor(error_hint = error_hint)
         else:
           # TODO: suggest to change the name to the dup one or correct you email
-          raise UserRegDupBothNameAndEmailException(
-            error_hint = {
-              "dup.name": {
-                "role": Role.Visitor.value,
-                "name": email_dup.user_name,
-              }},
-            error_msg = f"Duplicate User Name with a vistor, dup E-mail with a visitor whose name is {email_dup.user_name}"
-          )
+          error_hint = {
+            "dup.name": {
+              "user_role": Role.Visitor.value,
+              "user_name": email_dup.user_name,
+          }}
+          if user_passwd:
+            raise UserRegDupBothNameAndEmailException(error_hint=error_hint)
+          else:
+            raise VisitorRegDupBothNameEmailWithVisitorException(error_hint=error_hint)
 
     if name_dup:
       if name_dup.user_role < Role.Visitor.value:
-        raise UserRegDupNameException
+        if user_passwd:
+          raise UserRegDupNameException
+        else:
+          raise VisitorRegDupNameWithMemberException
       else:
-        if name_dup.user_email == "":
+        if not name_dup.user_email:
           if user_passwd:
             return _update_visitor_to_registered(name_dup.user_id, user_name, user_email, user_passwd)
           else:
             return _update_visitor_email(name_dup.user_id, user_name, user_email)
         else:
-          raise UserRegDupNameException
+          raise VisitorLoginUnmatchedEmailWithName
 
     if email_dup:
       if email_dup.user_role < Role.Visitor.value:
-        raise UserRegDupEmailException
+        if user_passwd:
+          raise UserRegDupEmailException
+        else:
+          raise VisitorRegDupEmailWithMember
       else:
         # TODO: suggest to change the name to the dup one
-        raise UserRegDupEmailException(
-            error_hint = {
-              "dup.name": {
-                "role": Role.Visitor.value,
-                "name": email_dup.user_name,
-              }},
-            error_msg = f"Dup E-mail with a visitor whose name is {email_dup.user_name}"
-          )
+        error_hint = {
+          "dup.name": {
+            "user_role": Role.Visitor.value,
+            "user_name": email_dup.user_name,
+        }}
+        if user_passwd:
+          raise UserRegDupEmailException(error_hint=error_hint)
+        else:
+          raise VisitorRegDupEmailWithVisitor(error_hint=error_hint)
 
     raise InternalError  # TODO: logging this abnormal case, the code path shouldn't be run here
   else:
@@ -150,19 +169,19 @@ def _handle_registration_with_email(user_name, user_email, user_passwd=None):
 def _handle_registration_without_email(user_name):
   flag, user = User.find_user_by_username(user_name)
   if flag \
-      and user.user_email == "":
+      and not user.user_email:
     if user.user_role < Role.Visitor.value:
       pass # TODO: logging this abornal case, user with Role greater than Visitor shouldn't have empty email
-    return UserInfo(user.user_id, user.user_name, user.user_mail, user.user_role)
+    return UserInfo(user.user_id, user.user_name, None, user.user_role)
   
   if flag \
-      and user.user_email != "":
+      and user.user_email:
     if user.user_role < Role.Visitor.value:
-      raise UserRegDupNameException (
+      raise VisitorLoginNameConflictWithMember (
         error_msg = f"{user_name} is taken by a member"
       )
     else:
-      raise UserRegDupNameException (
+      raise VisitorLoginNeedEmail (
         error_msg = f"{user_name} is taken by a visitor"
       )
   

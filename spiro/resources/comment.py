@@ -44,6 +44,7 @@ class CommentApi(Resource):
     comment_id = args["comment_id"]
     return get_comment(comment_id)
 
+  # TODO: return error if comment_content is empty
   @use_args(request_args.post, location="form")
   @multi_auth.login_required(role=[Role.Visitor.value, Role.Member.value, Role.Admin.value])
   @marshal_with(response_fields.post)
@@ -58,6 +59,9 @@ class CommentApi(Resource):
 
 @handle_exception
 def save_comment(article_id, user_id, user_name, comment_content):
+  if (not comment_content):
+    raise ArgEmptyComment
+
   comment = Comment(
     article_id = article_id,
     user_id = user_id,
