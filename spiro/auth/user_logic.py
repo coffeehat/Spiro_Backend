@@ -18,8 +18,12 @@ class UserInfo:
 
 def verify_user(user_name_or_email, user_passwd):
   flag, user = User.find_user_by_username_or_by_email(user_name_or_email)
-  if flag and verify_password(user_passwd, user.user_passwd):
-    return UserInfo(user.user_id, user.user_name, user.user_email, user.user_role)
+  if flag:
+    if user.user_role >= Role.Visitor.value:
+      # We have no password for visitor
+      raise UserLoginAsVisitorError
+    if verify_password(user_passwd, user.user_passwd):
+      return UserInfo(user.user_id, user.user_name, user.user_email, user.user_role)
   else:
     raise UserLoginException
 

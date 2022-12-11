@@ -66,6 +66,7 @@ class ErrorCode(enum.Enum):
   EC_USER_LOGIN_ERROR = 350
   EC_USER_LOGIN_TOKEN_EXPIRED = 351
   EC_USER_LOGIN_TOKEN_SIGN_ERROR = 352
+  EC_USER_LOGIN_AS_VISITOR_ERROR = 353
   
   EC_VISITOR_LOGIN_ERROR = 370
   EC_VISITOR_LOGIN_NEED_EMAIL = 371
@@ -313,6 +314,15 @@ class UserLoginTokenSignException(UserLoginException):
       error_hint = error_hint,
       error_msg  = error_msg,
       error_code = ErrorCode.EC_USER_LOGIN_TOKEN_SIGN_ERROR,
+      http_status_code = 400
+    )
+
+class UserLoginAsVisitorError(UserLoginException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_USER_LOGIN_AS_VISITOR_ERROR,
       http_status_code = 400
     )
 
