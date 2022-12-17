@@ -21,7 +21,8 @@ response_fields = {
   "error_msg":  restful_fields.String(default = ""),
   "token":      restful_fields.String(default = ""),
   "token_expire_timestamp": restful_fields.String(default = ""),
-  "user_name":  restful_fields.String(default = "")
+  "user_name":  restful_fields.String(default = ""),
+  "user_id":    restful_fields.Integer(default = 0)
 }
 
 class UserApi(Resource):
@@ -54,5 +55,6 @@ def _login_user(user_name, user_passwd):
   return {
     "token": token,
     "token_expire_timestamp": expire,
-    "user_name": user.user_name
+    "user_name": user.user_name,
+    "user_id": user.user_id
   }
