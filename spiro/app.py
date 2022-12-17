@@ -37,4 +37,4 @@ class Server:
     self.api.add_resource(TokenCheckApi, "/" + config.version + "/token_check")
 
   def run(self):
-    self.app.run()
+    self.app.run(host="0.0.0.0")
