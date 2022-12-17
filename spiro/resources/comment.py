@@ -11,13 +11,16 @@ from ..db import Comment
 
 request_args = EasyDict()
 request_args.get = {
-  "comment_id":       webargs_fields.Integer(required=True),
+  "comment_id":         webargs_fields.Integer(required=True),
 }
 request_args.post = {
   "article_id":         webargs_fields.Integer(required=True),
   "comment_content":    webargs_fields.String(required=True),
   "user_name":          webargs_fields.String(),
   "user_email":         webargs_fields.String()
+}
+request_args.delete = {
+  "comment_id":         webargs_fields.Integer(required=True)
 }
 
 comment_response_fields_without_error = {
@@ -28,14 +31,17 @@ comment_response_fields_without_error = {
   "comment_timestamp":  restful_fields.String(default = ""),
   "comment_content":    restful_fields.String(default = ""),
 }
-response_fields = EasyDict()
-response_fields.get = {
+error_response = {
   "error_code":         restful_fields.Integer(default = ErrorCode.EC_SUCCESS.value),
   "error_hint":         MarshalJsonItem(default = ""),
   "error_msg":          restful_fields.String(default = "")
 }
-response_fields.get.update(comment_response_fields_without_error)
+response_fields = EasyDict()
+response_fields.get = comment_response_fields_without_error
+response_fields.get.update(error_response)
 response_fields.post = response_fields.get
+
+response_fields.delete = error_response
 
 class CommentApi(Resource):
   @use_args(request_args.get, location="query")
@@ -44,7 +50,6 @@ class CommentApi(Resource):
     comment_id = args["comment_id"]
     return get_comment(comment_id)
 
-  # TODO: return error if comment_content is empty
   @use_args(request_args.post, location="form")
   @multi_auth.login_required(role=[Role.Visitor.value, Role.Member.value, Role.Admin.value])
   @marshal_with(response_fields.post)
@@ -56,6 +61,15 @@ class CommentApi(Resource):
     # user_email       = multi_auth.current_user()["user_email"]
 
     return save_comment(article_id, user_id, user_name, comment_content)
+
+  @use_args(request_args.delete, location="form")
+  @multi_auth.login_required(role=[Role.Member.value, Role.Admin.value])
+  @marshal_with(response_fields.delete)
+  def delete(self, args):
+    comment_id          = args["comment_id"]
+    user_id             = multi_auth.current_user().user_id
+
+    return delete_comment(comment_id, user_id)
 
 @handle_exception
 def save_comment(article_id, user_id, user_name, comment_content):
@@ -93,3 +107,14 @@ def get_comment(comment_id):
     }
   else:
     raise DbNotFound(error_msg = f"Cannot find comment by comment id: {comment_id}")
+
+@handle_exception
+def delete_comment(comment_id, user_id):
+  count = Comment.delete_comment_with_user_check(comment_id, user_id)
+  if count == 1:
+    return {}
+  elif count == 0:
+    raise CommentUserDontMatch
+  else:
+    # TODO: add log here, this should be impossible
+    raise InternalError

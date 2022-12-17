@@ -71,3 +71,12 @@ class Comment(db.Model):
       .limit(1)
     ).first()
     return count["count"]
+
+  @staticmethod
+  def delete_comment_with_user_check(comment_id, user_id):
+    result = db.session.execute(
+      sa.delete(Comment) \
+      .where(sa.and_(Comment.comment_id == comment_id, Comment.user_id == user_id)) \
+    )
+    db.session.commit()
+    return result.rowcount

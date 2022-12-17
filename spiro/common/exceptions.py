@@ -76,6 +76,9 @@ class ErrorCode(enum.Enum):
 
   EC_USER_UNAUTHORIZED_ERROR = 399
 
+  EC_COMMENT_ERROR = 400
+  EC_COMMENT_DELETE_USER_DONT_MATCH = 401
+
 # TODO: refine the http status code
 
 class ExceptionABC(Exception):
@@ -377,5 +380,23 @@ class UserUnAuthorizedException(CommonException):
       error_hint = error_hint,
       error_msg  = error_msg,
       error_code = ErrorCode.EC_USER_UNAUTHORIZED_ERROR,
+      http_status_code = 400
+    )
+
+class CommentException(CommonException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_COMMENT_ERROR,
+      http_status_code = 400
+    )
+
+class CommentUserDontMatch(CommentException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_COMMENT_DELETE_USER_DONT_MATCH,
       http_status_code = 400
     )
