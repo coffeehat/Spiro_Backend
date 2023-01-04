@@ -16,28 +16,39 @@ request_args.get = {
 request_args.post = {
   "article_id":         webargs_fields.Integer(required=True),
   "comment_content":    webargs_fields.String(required=True),
-  "user_name":          webargs_fields.String(),
-  "user_email":         webargs_fields.String()
+  "user_name":          webargs_fields.String(missing = ""),
+  "user_email":         webargs_fields.String(missing = ""),
+  "parent_comment_id":   webargs_fields.Integer(missing = 0),
+  "to_user_id":         webargs_fields.Integer(missing = 0),
+  "to_user_name":       webargs_fields.String(missing = "")
 }
 request_args.delete = {
   "comment_id":         webargs_fields.Integer(required=True)
 }
 
-comment_response_fields_without_error = {
+primary_comment_response_fields_without_error = {
   "article_id":         restful_fields.Integer(default = 0),
   "user_id":            restful_fields.Integer(default = 0),
   "user_name":          restful_fields.String(default = ""),
   "comment_id":         restful_fields.Integer(default = 0),
   "comment_timestamp":  restful_fields.String(default = ""),
-  "comment_content":    restful_fields.String(default = ""),
+  "comment_content":    restful_fields.String(default = "")
 }
+
+full_comment_response_fields_without_error = {
+  "parent_comment_id":  restful_fields.Integer(default = 0),
+  "to_user_id":         restful_fields.Integer(default = 0),
+  "to_user_name":       restful_fields.String(default = "")
+}
+full_comment_response_fields_without_error.update(primary_comment_response_fields_without_error)
+
 error_response = {
   "error_code":         restful_fields.Integer(default = ErrorCode.EC_SUCCESS.value),
   "error_hint":         MarshalJsonItem(default = ""),
   "error_msg":          restful_fields.String(default = "")
 }
 response_fields = EasyDict()
-response_fields.get = comment_response_fields_without_error
+response_fields.get = full_comment_response_fields_without_error
 response_fields.get.update(error_response)
 response_fields.post = response_fields.get
 
@@ -58,9 +69,20 @@ class CommentApi(Resource):
     comment_content     = args["comment_content"]
     user_id             = multi_auth.current_user().user_id
     user_name           = multi_auth.current_user().user_name
+    parent_comment_id    = args["parent_comment_id"]
+    to_user_id          = args["to_user_id"]
+    to_user_name        = args["to_user_name"]
     # user_email       = multi_auth.current_user()["user_email"]
 
-    return save_comment(article_id, user_id, user_name, comment_content)
+    return save_comment(
+      article_id, 
+      user_id, 
+      user_name, 
+      comment_content, 
+      parent_comment_id, 
+      to_user_id, 
+      to_user_name
+    )
 
   @use_args(request_args.delete, location="form")
   @multi_auth.login_required(role=[Role.Member.value, Role.Admin.value])
@@ -72,16 +94,40 @@ class CommentApi(Resource):
     return delete_comment(comment_id, user_id)
 
 @handle_exception
-def save_comment(article_id, user_id, user_name, comment_content):
+def save_comment(
+  article_id, 
+  user_id,
+  user_name, 
+  comment_content, 
+  parent_comment_id, 
+  to_user_id, 
+  to_user_name
+):
   if (not comment_content):
     raise ArgEmptyComment
 
+  # to_user_id and to_user_name must both show up or empty
+  if ((to_user_id and not to_user_name) or 
+      (not to_user_id and to_user_name)):
+    raise ArgInvalid
+  
+  # If provide to_user_id/to_user_name, parent_comment_id must be provided
+  if (to_user_id and not parent_comment_id):
+    raise ArgInvalid
+
+  # TODO: check whether user_id and commit_id exists
+  if (parent_comment_id):
+    pass
+
   comment = Comment(
-    article_id = article_id,
-    user_id = user_id,
-    user_name = user_name,
-    comment_content = comment_content,
-    comment_timestamp = get_utc_timestamp()
+    article_id =        article_id,
+    user_id =           user_id,
+    user_name =         user_name,
+    comment_content =   comment_content,
+    comment_timestamp = get_utc_timestamp(),
+    parent_comment_id =  parent_comment_id  if parent_comment_id else None,
+    to_user_id =        to_user_id        if to_user_id       else None,
+    to_user_name =      to_user_name      if to_user_name     else None
   )
   comment_id = Comment.add_comment(comment)
   return {
@@ -91,6 +137,9 @@ def save_comment(article_id, user_id, user_name, comment_content):
     "comment_id":             comment_id,
     "comment_timestamp":      str(comment.comment_timestamp),
     "comment_content":        comment.comment_content,
+    "parent_comment_id":      comment.parent_comment_id,
+    "to_user_id":             comment.to_user_id,
+    "to_user_name":           comment.to_user_name
   }
 
 @handle_exception
@@ -104,6 +153,9 @@ def get_comment(comment_id):
       "comment_id":           comment.comment_id,
       "comment_timestamp":    comment.comment_timestamp,
       "comment_content":      comment.comment_content,
+      "parent_comment_id":    comment.parent_comment_id,
+      "to_user_id":           comment.to_user_id,
+      "to_user_name":         comment.to_user_name
     }
   else:
     raise DbNotFound(error_msg = f"Cannot find comment by comment id: {comment_id}")
