@@ -22,11 +22,14 @@ request_args.get = {
 primary_comment_response_fields = deepcopy(primary_comment_response_fields_without_error)
 primary_comment_response_fields["sub_comment_list"] = \
   restful_fields.List(restful_fields.Nested(full_comment_response_fields_without_error))
+primary_comment_response_fields["is_more"] = \
+  restful_fields.Boolean()
 
 response_fields = EasyDict()
 response_fields.get = {
   "article_id":   restful_fields.Integer(),
   "comment_list": restful_fields.List(restful_fields.Nested(primary_comment_response_fields)),
+  "is_more":      restful_fields.Boolean(),
   "error_code":   restful_fields.Integer(default = ErrorCode.EC_SUCCESS.value),
   "error_hint":   MarshalJsonItem(default = ""),
   "error_msg":    restful_fields.String(default = "")
@@ -61,20 +64,35 @@ def get_comment_list(article_id, primary_comment_offset, primary_comment_count, 
   if sub_comment_count < 0:
     raise ArgInvalid("sub comment count is less than 0")
 
-  flag, comments, sub_comments = Comment.find_rangeof_comments_by_article_id(article_id, primary_comment_offset, primary_comment_count, sub_comment_count)
-  comment_id_mapping = {}
-  for i, comment in enumerate(comments):
-    comment.sub_comment_list = []
-    comment_id_mapping[comment.comment_id] = i
-
-  for sub_comment in sub_comments:
-    index = comment_id_mapping[sub_comment.parent_comment_id]
-    comments[index].sub_comment_list.append(sub_comment)
-  
+  flag, comments, sub_comments = Comment.find_rangeof_comments_by_article_id(article_id, primary_comment_offset, primary_comment_count + 1, sub_comment_count + 1)
   if flag:
+    primary_is_more = False
+    retrieved_comments_count = len(comments)
+    if retrieved_comments_count == primary_comment_count + 1:
+      primary_is_more = True
+      del comments[-1]
+
+    comment_id_mapping = {}
+    for i, comment in enumerate(comments):
+      comment.sub_comment_list = []
+      comment_id_mapping[comment.comment_id] = i
+
+    for sub_comment in sub_comments:
+      index = comment_id_mapping[sub_comment.parent_comment_id]
+      comments[index].sub_comment_list.append(sub_comment)
+
+    for comment in comments:
+      if comment.sub_comment_list:
+        comment.is_more = len(comment.sub_comment_list) == sub_comment_count + 1
+        if comment.is_more:
+          del comment.sub_comment_list[-1]
+      else:
+        comment.is_more = False
+  
     return {
       "article_id": article_id,
-      "comment_list": comments
+      "comment_list": comments,
+      "is_more": primary_is_more
     }
   else:
     raise DbNotFound

@@ -21,7 +21,8 @@ request_args.get = {
 response_fields = EasyDict()
 response_fields.get = {
   "article_id":   restful_fields.Integer(),
-  "comment_list": restful_fields.List(restful_fields.Nested(full_comment_response_fields_without_error)),
+  "sub_comment_list": restful_fields.List(restful_fields.Nested(full_comment_response_fields_without_error)),
+  "is_more":      restful_fields.Boolean(),
   "error_code":   restful_fields.Integer(default = ErrorCode.EC_SUCCESS.value),
   "error_hint":   MarshalJsonItem(default = ""),
   "error_msg":    restful_fields.String(default = "")
@@ -56,12 +57,18 @@ def get_sub_comment_list(article_id, parent_comment_id, sub_comment_offset, sub_
   if sub_comment_count < 0:
     raise ArgInvalid("sub comment count is less than 0")
 
-  flag, sub_comments = Comment.find_rangeof_sub_comments_by_parent_comment_id(parent_comment_id, sub_comment_offset, sub_comment_count)
+  flag, sub_comments = Comment.find_rangeof_sub_comments_by_parent_comment_id(parent_comment_id, sub_comment_offset, sub_comment_count + 1)
   
+  is_more = False
+  if len(sub_comments) == sub_comment_count + 1:
+    is_more = True
+    del sub_comments[-1]
+
   if flag:
     return {
       "article_id": article_id,
-      "comment_list": sub_comments
+      "sub_comment_list": sub_comments,
+      "is_more": is_more
     }
   else:
     raise DbNotFound
