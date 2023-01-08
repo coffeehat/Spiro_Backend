@@ -95,6 +95,31 @@ class Comment(db.Model):
       return False, None, None
 
   @staticmethod
+  def find_rangeof_sub_comments_by_parent_comment_id(
+    parent_comment_id,
+    sub_comment_offset,
+    sub_comment_count
+  ):
+    if sub_comment_count <= 0 or sub_comment_count is None:
+      sub_comments = db.session.execute(sa.select(Comment) \
+        .where(Comment.parent_comment_id == parent_comment_id) \
+        .order_by(Comment.comment_timestamp.asc()) \
+        .offset(sub_comment_offset)
+      ).scalars()
+    else:
+      sub_comments = db.session.execute(sa.select(Comment) \
+        .where(Comment.parent_comment_id == parent_comment_id) \
+        .order_by(Comment.comment_timestamp.asc()) \
+        .offset(sub_comment_offset) \
+        .limit(sub_comment_count)
+      ).scalars()
+    
+    if sub_comments:
+      return True, [sub_comment for sub_comment in sub_comments]
+    else:
+      return False, None
+
+  @staticmethod
   def get_comments_count_by_article_id(article_id) -> int:
     count = db.session.execute(
       sa.select(sa.func.count().label("count")) \

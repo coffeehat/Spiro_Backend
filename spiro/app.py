@@ -35,6 +35,7 @@ class Server:
     self.api.add_resource(CommentApi, "/" + config.version + "/comment")
     self.api.add_resource(UserApi, "/" + config.version + "/user")
     self.api.add_resource(TokenCheckApi, "/" + config.version + "/token_check")
+    self.api.add_resource(SubCommentListApi, "/" + config.version + "/sub_comment_list")
 
   def run(self):
     self.app.run(host="0.0.0.0")

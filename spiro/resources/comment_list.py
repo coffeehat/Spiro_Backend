@@ -16,7 +16,7 @@ request_args.get = {
   "article_id":               webargs_fields.Int(required=True),
   "primary_comment_offset":   webargs_fields.Int(required=True),
   "primary_comment_count":    webargs_fields.Int(required=True),
-  "sub_comment_count":        webargs_fields.Int(missing=3)
+  "sub_comment_count":        webargs_fields.Int(missing=20)
 }
 
 primary_comment_response_fields = deepcopy(primary_comment_response_fields_without_error)
