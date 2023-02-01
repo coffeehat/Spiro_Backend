@@ -67,9 +67,11 @@ def get_comment_list(article_id, primary_comment_offset, primary_comment_count, 
   flag, comments, sub_comments = Comment.find_rangeof_comments_by_article_id(article_id, primary_comment_offset, primary_comment_count + 1, sub_comment_count + 1)
   if flag:
     primary_is_more = False
+    excluded_primary_id = 0
     retrieved_comments_count = len(comments)
     if retrieved_comments_count == primary_comment_count + 1:
       primary_is_more = True
+      excluded_primary_id = comments[-1].comment_id
       del comments[-1]
 
     comment_id_mapping = {}
@@ -78,6 +80,8 @@ def get_comment_list(article_id, primary_comment_offset, primary_comment_count, 
       comment_id_mapping[comment.comment_id] = i
 
     for sub_comment in sub_comments:
+      if sub_comment.parent_comment_id == excluded_primary_id:
+        continue
       index = comment_id_mapping[sub_comment.parent_comment_id]
       comments[index].sub_comment_list.append(sub_comment)
 
