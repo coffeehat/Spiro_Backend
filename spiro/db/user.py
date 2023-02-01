@@ -13,6 +13,17 @@ class User(db.Model):
   user_register_timestamp = sa.Column(sa.Integer)
 
   @staticmethod
+  def get_user_email_by_user_id(user_id):
+    email = db.session.execute(sa.select(User.user_email) \
+      .where(User.user_id == user_id) \
+      .limit(1)
+    ).scalars().first()
+    if email:
+      return True, email
+    else:
+      return False, None
+
+  @staticmethod
   def find_user_by_username_and_email(user_name, user_email) -> typing.Tuple[bool, typing.Optional['User']]:
     user = db.session.execute(sa.select(User) \
       .where(sa.and_(User.user_name == user_name, User.user_email == user_email)) \

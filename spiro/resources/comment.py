@@ -7,7 +7,8 @@ from ..auth.multi_auth import multi_auth
 from ..common.defs import Role, Defaults
 from ..common.exceptions import *
 from ..common.utils import get_utc_timestamp, MarshalJsonItem
-from ..db import Comment
+from ..db import Comment, User
+from ..common.email import emailSender
 
 request_args = EasyDict()
 request_args.get = {
@@ -130,6 +131,9 @@ def save_comment(
     to_user_name =      to_user_name      if to_user_name     else None
   )
   comment_id = Comment.add_comment(comment)
+  flag, to_email = User.get_user_email_by_user_id(to_user_id)
+  if (flag):
+    emailSender.send_reply(to_email, user_name, comment_content)
   return {
     "article_id":             comment.article_id,
     "user_id":                comment.user_id,
