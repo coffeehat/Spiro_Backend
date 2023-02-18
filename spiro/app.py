@@ -3,11 +3,13 @@ from flask_restful import Api
 from flask_cors import CORS
 from waitress import serve
 
-from .common.email import email_sender_worker
 from .config import config
 from .resources import *
 
 from .db import db
+
+if config.email.enabled:
+  from .common.email import email_sender_worker
 
 # @singleton
 class Server:
@@ -39,10 +41,10 @@ class Server:
     self.api.add_resource(SubCommentListApi, "/" + config.version + "/sub_comment_list")
 
   def run(self):
-    email_sender_worker.run()
+    if config.email.enabled: email_sender_worker.run()
     serve(
       self.app, 
       host=config.network.listen_ip, 
       port=config.network.port
     )
-    email_sender_worker.terminate()
+    if config.email.enabled: email_sender_worker.terminate()

@@ -51,7 +51,8 @@ class EmailSenderWorker:
       print(f"Get work to do {msg}")
       self.em_sender.send_reply(msg['to_mail'], msg['user'], msg['content'])
 
-email_sender_worker = EmailSenderWorker()
+if config.email.enabled:
+  email_sender_worker = EmailSenderWorker()
 
 if __name__ == "__main__":
   worker = EmailSenderWorker()
