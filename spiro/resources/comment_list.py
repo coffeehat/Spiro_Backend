@@ -9,6 +9,7 @@ from .comment import primary_comment_response_fields_without_error, \
 
 from ..common.exceptions import *
 from ..common.utils import MarshalJsonItem
+from .. common.lock import r_lock
 from ..db import Comment
 
 request_args = EasyDict()
@@ -36,6 +37,7 @@ response_fields.get = {
 }
 
 class CommentListApi(Resource):
+  @r_lock
   @use_args(request_args.get, location="query")
   @marshal_with(response_fields.get)
   def get(self, args):

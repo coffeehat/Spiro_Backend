@@ -5,10 +5,11 @@ from webargs.flaskparser import use_args
 
 from ..auth.multi_auth import multi_auth
 from ..common.defs import Role, Defaults
+from ..common.email import email_sender_worker
 from ..common.exceptions import *
+from ..common.lock import r_lock, w_lock
 from ..common.utils import get_utc_timestamp, MarshalJsonItem
 from ..db import Comment, User
-from ..common.email import email_sender_worker
 
 request_args = EasyDict()
 request_args.get = {
@@ -56,12 +57,14 @@ response_fields.post = response_fields.get
 response_fields.delete = error_response
 
 class CommentApi(Resource):
+  @r_lock
   @use_args(request_args.get, location="query")
   @marshal_with(response_fields.get)
   def get(self, args):
     comment_id = args["comment_id"]
     return get_comment(comment_id)
 
+  @w_lock
   @use_args(request_args.post, location="form")
   @multi_auth.login_required(role=[Role.Visitor.value, Role.Member.value, Role.Admin.value])
   @marshal_with(response_fields.post)
@@ -85,6 +88,7 @@ class CommentApi(Resource):
       to_user_name
     )
 
+  @w_lock
   @use_args(request_args.delete, location="form")
   @multi_auth.login_required(role=[Role.Member.value, Role.Admin.value])
   @marshal_with(response_fields.delete)

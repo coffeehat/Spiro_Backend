@@ -7,6 +7,7 @@ from .comment import response_fields as comment_response_fields
 
 from ..common.exceptions import *
 from ..common.utils import MarshalJsonItem
+from ..common.lock import r_lock
 from ..db import Comment
 
 request_args = EasyDict()
@@ -24,6 +25,7 @@ response_fields.get = {
 }
 
 class CommentCountApi(Resource):
+  @r_lock
   @use_args(request_args.get, location="query")
   @marshal_with(response_fields.get)
   def get(self, args):

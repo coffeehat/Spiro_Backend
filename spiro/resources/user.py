@@ -2,10 +2,10 @@ from flask_restful import Resource, marshal_with, fields as restful_fields
 from webargs import validate, fields as webargs_fields
 from webargs.flaskparser import use_args
 
-from ..common.exceptions import *
 from ..auth.user_logic import register_user, verify_user
+from ..common.exceptions import *
+from ..common.lock import r_lock, w_lock
 from ..common.utils import generate_token, MarshalJsonItem
-from ..db.user import User
 
 # TODO: How to override webargs's error response?
 request_args = {
@@ -43,11 +43,13 @@ class UserApi(Resource):
     else:
       raise ArgInvalid
 
+@w_lock
 @handle_exception
 def _register_user(user_name, user_email, user_passwd):
   register_user(user_name, user_email, user_passwd)
   return {}
 
+@r_lock
 @handle_exception
 def _login_user(user_name, user_passwd):
   user = verify_user(user_name, user_passwd)
