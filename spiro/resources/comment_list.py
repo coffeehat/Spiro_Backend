@@ -101,4 +101,9 @@ def get_comment_list(article_id, primary_comment_offset, primary_comment_count, 
       "is_more": primary_is_more
     }
   else:
-    raise DbNotFound
+    # raise DbNotFound
+    return {
+      "article_id": article_id,
+      "comment_list": [],
+      "is_more": False
+    }
