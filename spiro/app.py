@@ -5,6 +5,7 @@ from flask_cors import CORS
 from .common.utils import singleton
 from .config import config
 from .resources import *
+from .common.email import email_sender_worker
 
 from .db import db
 
@@ -38,4 +39,6 @@ class Server:
     self.api.add_resource(SubCommentListApi, "/" + config.version + "/sub_comment_list")
 
   def run(self):
+    email_sender_worker.run()
     self.app.run(host="0.0.0.0")
+    email_sender_worker.terminate()
