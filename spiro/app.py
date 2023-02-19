@@ -4,7 +4,7 @@ from flask_cors import CORS
 from waitress import serve
 
 from .common.email import init_email_worker
-from .config import SpiroConfig
+from .config import SpiroConfig, check_config
 from .resources import *
 
 from .db import db
@@ -12,6 +12,7 @@ from .db import db
 # @singleton
 class Server:
   def __init__(self):
+    check_config()
     self.app = Flask(SpiroConfig.app_name)
     CORS(
       self.app,

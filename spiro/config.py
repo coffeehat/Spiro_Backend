@@ -1,6 +1,7 @@
 class _NetworkConfig:
   listen_ip = "0.0.0.0"
   port = "5000"
+  token_key = ""
 
 class _DbConfig:
   is_debug = True
@@ -26,3 +27,16 @@ class SpiroConfig:
   db = _DbConfig
   email = _EmailConfig
   misc = _MiscConfig
+
+def check_config():
+  if not SpiroConfig.network.token_key:
+    print("You Must Add a Config for Token Key")
+    print("You Can Give Whatever String Value for that Token Key")
+    print("But Need to Be SECRIT! PRIVATE!!!!")
+    print("\n\n")
+    print("------------------")
+    print("Q: How to set Token Key?")
+    print("A: Before you instantinate an `Server` object, you need to:")
+    print("    from spiro import SpiroConfig")
+    print("    SpiroConfig.network.token_key = WHATEVER KEY YOU WANT, BUT KEEP SECRIT!!!")
+    raise RuntimeError

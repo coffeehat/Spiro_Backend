@@ -2,11 +2,12 @@ from flask_httpauth import HTTPTokenAuth
 
 from .user_logic import UserInfo
 
+from ..config import SpiroConfig
 from ..db.user import User
 from ..common.exceptions import *
 from ..common.utils import decode_token
 
-SECERT_KEY = 'test'
+SECERT_KEY = SpiroConfig.network.token_key
 
 token_auth = HTTPTokenAuth('Bearer')
 
