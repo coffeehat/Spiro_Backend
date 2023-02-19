@@ -138,7 +138,7 @@ def save_comment(
   comment_id = Comment.add_comment(comment)
   flag, to_email = User.get_user_email_by_user_id(to_user_id)
   if (SpiroConfig.email.enabled and flag):
-    get_email_worker().send(to_email, user_name, comment_content)
+    get_email_worker().send_reply_hint(to_email, user_name, comment_content)
   return {
     "article_id":             comment.article_id,
     "user_id":                comment.user_id,
