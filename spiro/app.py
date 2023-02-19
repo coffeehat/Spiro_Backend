@@ -20,8 +20,8 @@ class Server:
     self.api = Api(self.app)
 
     # Database related
-    self.app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///comments.db"
-    self.app.config['SQLALCHEMY_ECHO'] = True
+    self.app.config["SQLALCHEMY_DATABASE_URI"] = SpiroConfig.db.url
+    self.app.config['SQLALCHEMY_ECHO'] = SpiroConfig.db.is_debug
     db.init_app(self.app)
 
     with self.app.app_context():

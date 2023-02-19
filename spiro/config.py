@@ -4,6 +4,7 @@ class _NetworkConfig:
 
 class _DbConfig:
   is_debug = True
+  url = "sqlite:///comments.db"
 
 class _EmailConfig:
   enabled = False
