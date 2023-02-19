@@ -1,7 +1,8 @@
 
+from ..config import SpiroConfig
 from ..common.defs import Role
 from ..common.exceptions import *
-
+from ..common.register_verify import send_mail_verification
 from ..common.utils import get_password_hash, get_utc_timestamp, verify_password
 from ..db import User
 
@@ -22,6 +23,9 @@ def verify_user(user_name_or_email, user_passwd):
     if user.user_role >= Role.Visitor.value:
       # We have no password for visitor
       raise UserLoginAsVisitorError
+    if SpiroConfig.email.enabled and not user.user_is_email_verified:
+      send_mail_verification(user.user_id, user.user_name, user.user_email)
+      raise UserEmailNotVerifedError
     if verify_password(user_passwd, user.user_passwd):
       return UserInfo(user.user_id, user.user_name, user.user_email, user.user_role)
   raise UserLoginException
@@ -54,7 +58,11 @@ def _handle_registration_with_email(user_name, user_email, user_passwd=None):
     # We find the very user who has same username and email!
     if users[0].user_role < Role.Visitor.value:
       if user_passwd:
-        raise UserRegDupBothNameAndEmailException
+        if SpiroConfig.email.enabled and not users[0].user_is_email_verified:
+          send_mail_verification(users[0].user_id, users[0].user_name, users[0].user_email)
+          raise UserEmailNotVerifedError
+        else:
+          raise UserRegDupBothNameAndEmailException
       else:
         raise VisitorLoginNeedPasswordAuthentication
     else:
@@ -201,10 +209,15 @@ def _update_visitor_to_registered(user_id, user_name, user_email, user_passwd):
       "user_email": user_email,
       "user_role": Role.Member.value,
       "user_passwd": get_password_hash(user_passwd),
-      "user_register_timestamp": get_utc_timestamp()
+      "user_register_timestamp": get_utc_timestamp(),
+      "user_is_email_verified": False
     }
   )
-  return UserInfo(user_id, user_name, user_email, Role.Member.value)
+  if SpiroConfig.email.enabled and user_passwd and user_email:
+    send_mail_verification(user_id, user_name, user_email)
+    return UserInfo(user_id, user_name, user_email, Role.Member.value), True
+  else:
+    return UserInfo(user_id, user_name, user_email, Role.Member.value), False
 
 def _update_visitor_email(user_id, user_name, user_email):
   User.update_user(
@@ -226,8 +239,12 @@ def _register_new_user(user_name, user_email, user_passwd = None):
     user_email = user_email,
     user_role  = user_role,
     user_passwd = user_hash,
-    user_register_timestamp = user_register_timestamp
+    user_register_timestamp = user_register_timestamp,
+    user_is_email_verified = False
   )
   user_id = User.add_user_and_return_id(user)
-
-  return UserInfo(user_id, user_name, user_email, user_role)
+  if SpiroConfig.email.enabled and user_passwd and user_email:
+    send_mail_verification(user_id, user_name, user_email)
+    return UserInfo(user_id, user_name, user_email, user_role), True
+  else:
+    return UserInfo(user_id, user_name, user_email, user_role), False

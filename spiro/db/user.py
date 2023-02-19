@@ -11,6 +11,7 @@ class User(db.Model):
   user_role               = sa.Column(sa.Integer, nullable=False)
   user_passwd             = sa.Column(sa.String)
   user_register_timestamp = sa.Column(sa.Integer)
+  user_is_email_verified  = sa.Column(sa.Boolean)
 
   @staticmethod
   def get_user_email_by_user_id(user_id):
@@ -115,8 +116,8 @@ class User(db.Model):
     ret = db.session.execute(
       sa.text(
         f"INSERT INTO {User.__table__.name} \
-          (user_name, user_email, user_role, user_passwd, user_register_timestamp) \
-          VALUES (:user_name, :user_email, :user_role, :user_passwd, :user_register_timestamp) \
+          (user_name, user_email, user_role, user_passwd, user_register_timestamp, user_is_email_verified) \
+          VALUES (:user_name, :user_email, :user_role, :user_passwd, :user_register_timestamp, :user_is_email_verified) \
           RETURNING user_id"
       ),
       {
@@ -124,7 +125,8 @@ class User(db.Model):
         "user_email":              user.user_email,
         "user_role":               user.user_role, 
         "user_passwd":             user.user_passwd,
-        "user_register_timestamp": user.user_register_timestamp
+        "user_register_timestamp": user.user_register_timestamp,
+        "user_is_email_verified":  user.user_is_email_verified
       }
     ).first()
     user_id = ret[0]
@@ -136,6 +138,15 @@ class User(db.Model):
     db.session.execute(
       sa.update(User) \
       .values(user) \
+      .where(User.user_id == user_id) \
+    )
+    db.session.commit()
+
+  @staticmethod
+  def update_user_email_verification(user_id, veri_status):
+    db.session.execute(
+      sa.update(User) \
+      .values(user_is_email_verified = veri_status) \
       .where(User.user_id == user_id) \
     )
     db.session.commit()

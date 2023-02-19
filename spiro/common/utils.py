@@ -1,5 +1,7 @@
 import datetime
+import random
 import re
+import string
 
 from datetime import timezone
 from flask_restful import fields as restful_fields
@@ -48,6 +50,9 @@ def get_expire_time(expire_seconds):
 def convert_expire_time_to_cookies_expire_string(dt):
   utc_time = dt.replace(tzinfo=timezone.utc)
   return utc_time.strftime("%a, %d %b %Y %H:%M:%S GMT")
+
+def gen_random_string(length):
+  return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
 
 class MarshalJsonItem(restful_fields.Raw):
   def format(self, value):

@@ -3,6 +3,7 @@ from webargs import validate, fields as webargs_fields
 from webargs.flaskparser import use_args
 
 from ..auth.user_logic import register_user, verify_user
+from ..config import SpiroConfig
 from ..common.exceptions import *
 from ..common.lock import r_lock, w_lock
 from ..common.utils import generate_token, MarshalJsonItem
@@ -46,8 +47,12 @@ class UserApi(Resource):
 @w_lock
 @handle_exception
 def _register_user(user_name, user_email, user_passwd):
-  register_user(user_name, user_email, user_passwd)
-  return {}
+  ret = register_user(user_name, user_email, user_passwd)
+  if SpiroConfig.email.enabled and ret[1]:
+    # Hint for email verification for the frontend
+    return {"error_hint": "email_veri"}
+  else:
+    return {}
 
 @r_lock
 @handle_exception

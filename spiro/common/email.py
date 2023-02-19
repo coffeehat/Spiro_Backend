@@ -6,7 +6,8 @@ from time import sleep
 
 from ..config import SpiroConfig
 
-template = "{user}回复了您的评论，回复内容为：{content}"
+reply_template = "{user}回复了您的评论，回复内容为：{content}"
+verify_template = "{user}你好，感谢您注册{website}, 请点击:\n\n{link}\n\n以验证你的邮箱（若超过15分钟未进行验证，数据库会回滚您的信息，您需要重新注册）"
 
 email_sender_worker = None
 
@@ -24,12 +25,7 @@ class _EmailSender:
     self.server = smtplib.SMTP(SpiroConfig.email.smtp_server, SpiroConfig.email.port)
     self.server.login(SpiroConfig.email.send_addr, SpiroConfig.email.password)
 
-  def send_reply(self, to_email, user, content):
-    msg = MIMEText(template.format(user=user, content=content))
-    msg["Subject"] = "您有新的回复"
-    msg["From"] = SpiroConfig.email.send_addr
-    msg["To"] = to_email
-    
+  def send_mail(self, to_email, msg):
     self.server.sendmail(SpiroConfig.email.send_addr, to_email, msg.as_string())
 
 class _EmailSenderWorker:
@@ -49,18 +45,32 @@ class _EmailSenderWorker:
         self.p.terminate()
         self.q.close()
 
-  def send(self, to_mail, user, content):
+  def send_reply_hint(self, to_mail, user, reply_content):
+    content = MIMEText(reply_template.format(user=user, content=reply_content))
+    content["Subject"] = "您有新的回复"
+    content["From"] = SpiroConfig.email.send_addr
+    content["To"] = to_mail
     self.q.put({
-      'to_mail': to_mail,
-      'user': user,
-      'content': content 
+      "to": to_mail,
+      "content": content
+    })
+
+  def send_email_verify(self, to_mail, user, link):
+    content = MIMEText(verify_template.format(
+      user=user, website=SpiroConfig.website_name, link=link
+    ))
+    content["Subject"] = f"{SpiroConfig.website_name}邮箱验证"
+    content["From"] = SpiroConfig.email.send_addr
+    content["To"] = to_mail
+    self.q.put({
+      "to": to_mail,
+      "content": content
     })
 
   def _work(self):
     while True:
       msg = self.q.get()
-      print(f"Get work to do {msg}")
-      self.em_sender.send_reply(msg['to_mail'], msg['user'], msg['content'])
+      self.em_sender.send_mail(msg["to"], msg["content"])
 
 if __name__ == "__main__":
   worker = _EmailSenderWorker()

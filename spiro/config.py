@@ -17,6 +17,9 @@ class _MiscConfig:
   pass_salt = "spiro"
 
 class SpiroConfig:
+  website_name = "Sprio"
+  website_domain = "localhost"
+  is_https = False
   version = "v1.0"
   app_name = "spiro"
   network = _NetworkConfig

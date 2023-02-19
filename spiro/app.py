@@ -38,6 +38,9 @@ class Server:
     self.api.add_resource(TokenCheckApi,     "/" + SpiroConfig.version + "/token_check")
     self.api.add_resource(SubCommentListApi, "/" + SpiroConfig.version + "/sub_comment_list")
 
+    if SpiroConfig.email.enabled:
+      self.api.add_resource(EmailVerificationApi, "/" + SpiroConfig.version + "/email_verify/<string:veri_id>")
+
   def run(self):
     if SpiroConfig.email.enabled:
       email_worker = init_email_worker()

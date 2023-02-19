@@ -33,4 +33,5 @@ def _handle_registered(username_or_email, user_passwd):
 
 @handle_exception_tlocal
 def _handle_visitor(user_name, user_email):
-  return register_user(user_name, user_email)
+  # For visitors, we don't need to verify email
+  return register_user(user_name, user_email)[0]

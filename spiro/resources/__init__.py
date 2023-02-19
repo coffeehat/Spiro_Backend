@@ -4,3 +4,4 @@ from .comment import CommentApi
 from .user import UserApi
 from .token_check import TokenCheckApi
 from .sub_comment_list import SubCommentListApi
+from .email_verification import EmailVerificationApi

@@ -74,6 +74,7 @@ class ErrorCode(enum.Enum):
   EC_VISITOR_LOGIN_UNMATCHED_EMIAL_WITH_NAME = 373
   EC_VISITOR_LOGIN_NEED_PASSWD_AUTHENTICATION = 374
 
+  EC_USER_EMAIL_NOT_VERIFED = 398
   EC_USER_UNAUTHORIZED_ERROR = 399
 
   EC_COMMENT_ERROR = 400
@@ -190,7 +191,7 @@ class UserException(CommonException):
     super(CommonException, self).__init__(
       error_hint = error_hint,
       error_msg  = error_msg,
-      error_code = ErrorCode.EC_DB_NOT_FOUND_ERROR,
+      error_code = ErrorCode.EC_USER_GENERIC_ERROR,
       http_status_code = 400
     )
 
@@ -371,6 +372,15 @@ class VisitorLoginNeedPasswordAuthentication(UserLoginException):
       error_hint = error_hint,
       error_msg  = error_msg,
       error_code = ErrorCode.EC_VISITOR_LOGIN_NEED_PASSWD_AUTHENTICATION,
+      http_status_code = 400
+    )
+
+class UserEmailNotVerifedError(UserLoginException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_USER_EMAIL_NOT_VERIFED,
       http_status_code = 400
     )
 
