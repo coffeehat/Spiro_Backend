@@ -7,7 +7,7 @@ from time import sleep
 from ..config import SpiroConfig
 
 reply_template = "{user}回复了您的评论，回复内容为：{content}"
-verify_template = "{user}你好，感谢您注册{website}, 请点击:\n\n{link}\n\n以验证你的邮箱（若超过15分钟未进行验证，数据库会回滚您的信息，您需要重新注册）"
+verify_template = "{user}你好，感谢您注册{website}, 请点击:\n\n{link}\n\n以验证你的邮箱"
 
 email_sender_worker = None
 
