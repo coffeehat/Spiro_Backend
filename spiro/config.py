@@ -13,6 +13,10 @@ config.network.port = "5000"
 config.db = EasyDict()
 config.db.is_debug = True
 
+# misc
+config.misc = EasyDict()
+config.misc.pass_salt = "spiro"
+
 # email
 config.email = EasyDict()
 config.email.enabled = False
