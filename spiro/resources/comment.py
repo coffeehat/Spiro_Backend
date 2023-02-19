@@ -21,9 +21,10 @@ request_args.post = {
   "comment_content":    webargs_fields.String(required=True),
   "user_name":          webargs_fields.String(missing = ""),
   "user_email":         webargs_fields.String(missing = ""),
-  "parent_comment_id":   webargs_fields.Integer(missing = 0),
+  "parent_comment_id":  webargs_fields.Integer(missing = 0),
   "to_user_id":         webargs_fields.Integer(missing = 0),
-  "to_user_name":       webargs_fields.String(missing = "")
+  "to_user_name":       webargs_fields.String(missing = ""),
+  "url":                webargs_fields.String(required=True) # TODO: Parse url to prevent malicious url
 }
 request_args.delete = {
   "comment_id":         webargs_fields.Integer(required=True)
@@ -77,6 +78,7 @@ class CommentApi(Resource):
     parent_comment_id    = args["parent_comment_id"]
     to_user_id          = args["to_user_id"]
     to_user_name        = args["to_user_name"]
+    url                 = args["url"]
     # user_email       = multi_auth.current_user()["user_email"]
 
     return save_comment(
@@ -86,7 +88,8 @@ class CommentApi(Resource):
       comment_content, 
       parent_comment_id, 
       to_user_id, 
-      to_user_name
+      to_user_name,
+      url
     )
 
   @w_lock
@@ -107,7 +110,8 @@ def save_comment(
   comment_content, 
   parent_comment_id, 
   to_user_id, 
-  to_user_name
+  to_user_name,
+  url
 ):
   if (not comment_content):
     raise ArgEmptyComment
@@ -138,7 +142,7 @@ def save_comment(
   comment_id = Comment.add_comment(comment)
   flag, to_email = User.get_user_email_by_user_id(to_user_id)
   if (SpiroConfig.email.enabled and flag):
-    get_email_worker().send_reply_hint(to_email, user_name, comment_content)
+    get_email_worker().send_reply_hint(to_email, user_name, comment_content, url)
   return {
     "article_id":             comment.article_id,
     "user_id":                comment.user_id,

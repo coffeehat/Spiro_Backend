@@ -6,8 +6,8 @@ from time import sleep
 
 from ..config import SpiroConfig
 
-reply_template = "{user}回复了您的评论，回复内容为：{content}"
-verify_template = "{user}你好，感谢您注册{website}, 请点击:\n\n{link}\n\n以验证你的邮箱"
+reply_template = "{user}回复了您的评论，回复内容为：\n\n{content}\n\n\n----------------------\n请点击：\n{link}\n以了解详情"
+verify_template = "{user}你好，感谢您注册{website}, 请点击：\n\n{link}\n\n以验证你的邮箱"
 
 email_sender_worker = None
 
@@ -43,8 +43,8 @@ class _EmailSenderWorker:
         self.p.terminate()
         self.q.close()
 
-  def send_reply_hint(self, to_mail, user, reply_content):
-    content = MIMEText(reply_template.format(user=user, content=reply_content))
+  def send_reply_hint(self, to_mail, user, reply_content, url):
+    content = MIMEText(reply_template.format(user=user, content=reply_content, link=url))
     content["Subject"] = "您有新的回复"
     content["From"] = SpiroConfig.email.send_addr
     content["To"] = to_mail
