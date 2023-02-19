@@ -2,6 +2,7 @@ from .email import get_email_worker
 from .utils import gen_random_string
 from ..config import SpiroConfig
 from ..common.exceptions import *
+from ..common.lock import w_lock
 from ..db.user import User
 
 # veri_id -> user_id
@@ -33,7 +34,11 @@ def handle_verification(veri_id):
   if not veri_id in verify_queue:
     raise UserException
   else:
-    user_id = verify_queue[veri_id]
-    User.update_user_email_verification(user_id, True)
-    del verify_queue[veri_id]
-    del verify_queue_reverse[user_id]
+    _handle_verification(veri_id)
+
+@w_lock
+def _handle_verification(veri_id):
+  user_id = verify_queue[veri_id]
+  User.update_user_email_verification(user_id, True)
+  del verify_queue[veri_id]
+  del verify_queue_reverse[user_id]
