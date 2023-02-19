@@ -3,18 +3,16 @@ from flask_restful import Api
 from flask_cors import CORS
 from waitress import serve
 
-from .config import config
+from .common.email import init_email_worker
+from .config import SpiroConfig
 from .resources import *
 
 from .db import db
 
-if config.email.enabled:
-  from .common.email import email_sender_worker
-
 # @singleton
 class Server:
   def __init__(self):
-    self.app = Flask(config.app_name)
+    self.app = Flask(SpiroConfig.app_name)
     CORS(
       self.app,
       supports_credentials=True
@@ -33,18 +31,23 @@ class Server:
     self._add_resource()
   
   def _add_resource(self):
-    self.api.add_resource(CommentCountApi, "/" + config.version + "/comment_count")
-    self.api.add_resource(CommentListApi, "/" + config.version + "/comment_list")
-    self.api.add_resource(CommentApi, "/" + config.version + "/comment")
-    self.api.add_resource(UserApi, "/" + config.version + "/user")
-    self.api.add_resource(TokenCheckApi, "/" + config.version + "/token_check")
-    self.api.add_resource(SubCommentListApi, "/" + config.version + "/sub_comment_list")
+    self.api.add_resource(CommentCountApi,   "/" + SpiroConfig.version + "/comment_count")
+    self.api.add_resource(CommentListApi,    "/" + SpiroConfig.version + "/comment_list")
+    self.api.add_resource(CommentApi,        "/" + SpiroConfig.version + "/comment")
+    self.api.add_resource(UserApi,           "/" + SpiroConfig.version + "/user")
+    self.api.add_resource(TokenCheckApi,     "/" + SpiroConfig.version + "/token_check")
+    self.api.add_resource(SubCommentListApi, "/" + SpiroConfig.version + "/sub_comment_list")
 
   def run(self):
-    if config.email.enabled: email_sender_worker.run()
+    if SpiroConfig.email.enabled:
+      email_worker = init_email_worker()
+      email_worker.run()
+
     serve(
       self.app, 
-      host=config.network.listen_ip, 
-      port=config.network.port
+      host=SpiroConfig.network.listen_ip, 
+      port=SpiroConfig.network.port
     )
-    if config.email.enabled: email_sender_worker.terminate()
+
+    if SpiroConfig.email.enabled: 
+      email_worker.terminate()

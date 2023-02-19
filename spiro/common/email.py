@@ -4,27 +4,38 @@ from email.mime.text import MIMEText
 from multiprocessing import Queue, Process
 from time import sleep
 
-from ..config import config
+from ..config import SpiroConfig
 
 template = "{user}回复了您的评论，回复内容为：{content}"
 
-class EmailSender:
+email_sender_worker = None
+
+def init_email_worker():
+  global email_sender_worker
+  email_sender_worker = _EmailSenderWorker()
+  return email_sender_worker
+
+def get_email_worker():
+  global email_sender_worker
+  return email_sender_worker
+
+class _EmailSender:
   def __init__(self):
-    self.server = smtplib.SMTP(config.email.smtp_server, config.email.port)
-    self.server.login(config.email.addr, config.email.password)
+    self.server = smtplib.SMTP(SpiroConfig.email.smtp_server, SpiroConfig.email.port)
+    self.server.login(SpiroConfig.email.send_addr, SpiroConfig.email.password)
 
   def send_reply(self, to_email, user, content):
     msg = MIMEText(template.format(user=user, content=content))
     msg["Subject"] = "您有新的回复"
-    msg["From"] = config.email.addr
+    msg["From"] = SpiroConfig.email.send_addr
     msg["To"] = to_email
     
-    self.server.sendmail(config.email.addr, to_email, msg.as_string())
+    self.server.sendmail(SpiroConfig.email.send_addr, to_email, msg.as_string())
 
-class EmailSenderWorker:
+class _EmailSenderWorker:
   def __init__(self):
     self.q = Queue()
-    self.em_sender = EmailSender()
+    self.em_sender = _EmailSender()
 
   def run(self):
     self.p = Process(target=self._work)
@@ -51,11 +62,8 @@ class EmailSenderWorker:
       print(f"Get work to do {msg}")
       self.em_sender.send_reply(msg['to_mail'], msg['user'], msg['content'])
 
-if config.email.enabled:
-  email_sender_worker = EmailSenderWorker()
-
 if __name__ == "__main__":
-  worker = EmailSenderWorker()
+  worker = _EmailSenderWorker()
   worker.run()
   worker.send("test@yopmail.com", "test", "output")
   print("Finished")

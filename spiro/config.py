@@ -1,26 +1,24 @@
-from easydict import EasyDict
+class _NetworkConfig:
+  listen_ip = "0.0.0.0"
+  port = "5000"
 
-config = EasyDict()
-config.version = "v1.0"
-config.app_name = "sprio"
+class _DbConfig:
+  is_debug = True
 
-# network
-config.network = EasyDict()
-config.network.listen_ip = "0.0.0.0"
-config.network.port = "5000"
+class _EmailConfig:
+  enabled = False
+  smtp_server = ""
+  port = 25
+  password = ""
+  send_addr = ""
 
-# db
-config.db = EasyDict()
-config.db.is_debug = True
+class _MiscConfig:
+  pass_salt = "spiro"
 
-# misc
-config.misc = EasyDict()
-config.misc.pass_salt = "spiro"
-
-# email
-config.email = EasyDict()
-config.email.enabled = False
-config.email.addr = ""
-config.email.port = 25
-config.email.smtp_server = ""
-config.email.password = ""
+class SpiroConfig:
+  version = "v1.0"
+  app_name = "spiro"
+  network = _NetworkConfig
+  db = _DbConfig
+  email = _EmailConfig
+  misc = _MiscConfig

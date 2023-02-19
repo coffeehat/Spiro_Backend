@@ -8,7 +8,7 @@ from jose.exceptions import ExpiredSignatureError, JWTError
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from .exceptions import UserLoginTokenExpired, UserLoginTokenSignException
-from ..config import config
+from ..config import SpiroConfig
 
 def singleton(cls):
   instances = {}
@@ -26,10 +26,10 @@ def is_email(s):
   return re.match(email_pattern, s)
 
 def get_password_hash(password):
-  return generate_password_hash(password + config.misc.pass_salt)
+  return generate_password_hash(password + SpiroConfig.misc.pass_salt)
 
 def verify_password(password, hash):
-  return check_password_hash(hash, password + config.misc.pass_salt)
+  return check_password_hash(hash, password + SpiroConfig.misc.pass_salt)
 
 def get_current_time():
   return datetime.datetime.utcnow()

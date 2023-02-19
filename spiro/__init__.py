@@ -1,2 +1,2 @@
-from .config import config
+from .config import SpiroConfig
 from .app import Server

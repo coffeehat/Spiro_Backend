@@ -4,14 +4,13 @@ from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
 from ..auth.multi_auth import multi_auth
-from ..config import config
-from ..common.defs import Role, Defaults
+from ..config import SpiroConfig
+from ..common.defs import Role
+from ..common.email import get_email_worker
 from ..common.exceptions import *
 from ..common.lock import r_lock, w_lock
 from ..common.utils import get_utc_timestamp, MarshalJsonItem
 from ..db import Comment, User
-
-if config.email.enabled: from ..common.email import email_sender_worker
 
 request_args = EasyDict()
 request_args.get = {
@@ -138,8 +137,8 @@ def save_comment(
   )
   comment_id = Comment.add_comment(comment)
   flag, to_email = User.get_user_email_by_user_id(to_user_id)
-  if (config.email.enabled and flag):
-    email_sender_worker.send(to_email, user_name, comment_content)
+  if (SpiroConfig.email.enabled and flag):
+    get_email_worker().send(to_email, user_name, comment_content)
   return {
     "article_id":             comment.article_id,
     "user_id":                comment.user_id,
