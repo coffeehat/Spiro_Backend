@@ -21,11 +21,9 @@ def get_email_worker():
   return email_sender_worker
 
 class _EmailSender:
-  def __init__(self):
+  def send_mail(self, to_email, msg):
     self.server = smtplib.SMTP(SpiroConfig.email.smtp_server, SpiroConfig.email.port)
     self.server.login(SpiroConfig.email.send_addr, SpiroConfig.email.password)
-
-  def send_mail(self, to_email, msg):
     self.server.sendmail(SpiroConfig.email.send_addr, to_email, msg.as_string())
 
 class _EmailSenderWorker:
