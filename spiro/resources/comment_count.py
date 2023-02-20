@@ -15,7 +15,7 @@ request_args.get = {
 
 response_fields = EasyDict()
 response_fields.get = {
-  "article_uuid":   restful_fields.Integer(default = 0),
+  "article_uuid": restful_fields.Integer(default = "0"),
   "count":        restful_fields.Integer(default = 0),
   "error_code":   restful_fields.Integer(default = ErrorCode.EC_SUCCESS.value),
   "error_hint":   MarshalJsonItem(default = ""),

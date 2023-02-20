@@ -28,7 +28,7 @@ primary_comment_response_fields["is_more"] = \
 
 response_fields = EasyDict()
 response_fields.get = {
-  "article_uuid":   restful_fields.String(),
+  "article_uuid": restful_fields.String(),
   "comment_list": restful_fields.List(restful_fields.Nested(primary_comment_response_fields)),
   "is_more":      restful_fields.Boolean(),
   "error_code":   restful_fields.Integer(default = ErrorCode.EC_SUCCESS.value),

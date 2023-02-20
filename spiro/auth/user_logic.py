@@ -183,7 +183,7 @@ def _handle_registration_without_email(user_name):
       and not user.user_email:
     if user.user_role < Role.Visitor.value:
       pass # TODO: logging this abornal case, user with Role greater than Visitor shouldn't have empty email
-    return UserInfo(user.user_id, user.user_name, None, user.user_role)
+    return UserInfo(user.user_id, user.user_name, None, user.user_role), True
   
   if flag \
       and user.user_email:

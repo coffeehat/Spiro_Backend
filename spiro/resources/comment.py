@@ -17,7 +17,7 @@ request_args.get = {
   "comment_id":         webargs_fields.Integer(required=True),
 }
 request_args.post = {
-  "article_uuid":         webargs_fields.String(required=True),
+  "article_uuid":       webargs_fields.String(required=True),
   "comment_content":    webargs_fields.String(required=True),
   "user_name":          webargs_fields.String(missing = ""),
   "user_email":         webargs_fields.String(missing = ""),
@@ -31,7 +31,7 @@ request_args.delete = {
 }
 
 primary_comment_response_fields_without_error = {
-  "article_uuid":         restful_fields.String(default = 0),
+  "article_uuid":       restful_fields.String(default = "0"),
   "user_id":            restful_fields.Integer(default = 0),
   "user_name":          restful_fields.String(default = ""),
   "comment_id":         restful_fields.Integer(default = 0),

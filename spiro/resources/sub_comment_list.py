@@ -13,7 +13,7 @@ from ..db import Comment
 
 request_args = EasyDict()
 request_args.get = {
-  "article_uuid":               webargs_fields.String(required=True),
+  "article_uuid":             webargs_fields.String(required=True),
   "parent_comment_id":        webargs_fields.Int(required=True),
   "sub_comment_offset":       webargs_fields.Int(required=True),
   "sub_comment_count":        webargs_fields.Int(required=True)
