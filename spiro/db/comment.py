@@ -4,16 +4,16 @@ import sqlalchemy as sa
 from ..db import db
 
 class Comment(db.Model):
-  comment_id            = sa.Column(sa.Integer,                           primary_key=True)
-  article_uuid            = sa.Column(sa.String,                            nullable=False)
-  user_id               = sa.Column(sa.ForeignKey("user.user_id"),        nullable=False)
-  user_name             = sa.Column(sa.ForeignKey("user.user_name"),      nullable=False)
-  comment_content       = sa.Column(sa.String,                            nullable=False)
-  comment_timestamp     = sa.Column(sa.Integer,                           nullable=False)
+  comment_id            = sa.Column(sa.Integer,                             primary_key=True)
+  article_uuid          = sa.Column(sa.ForeignKey("article.article_uuid"),  nullable=False)
+  user_id               = sa.Column(sa.ForeignKey("user.user_id"),          nullable=False)
+  user_name             = sa.Column(sa.ForeignKey("user.user_name"),        nullable=False)
+  comment_content       = sa.Column(sa.String,                              nullable=False)
+  comment_timestamp     = sa.Column(sa.Integer,                             nullable=False)
   # For sub-comment
-  parent_comment_id     = sa.Column(sa.ForeignKey("comment.comment_id"),  nullable=True)
-  to_user_id            = sa.Column(sa.ForeignKey("user.user_id"),        nullable=True)
-  to_user_name          = sa.Column(sa.ForeignKey("user.user_name"),      nullable=True)
+  parent_comment_id     = sa.Column(sa.ForeignKey("comment.comment_id"),    nullable=True)
+  to_user_id            = sa.Column(sa.ForeignKey("user.user_id"),          nullable=True)
+  to_user_name          = sa.Column(sa.ForeignKey("user.user_name"),        nullable=True)
 
   @staticmethod
   def add_comment(comment: 'Comment'):
