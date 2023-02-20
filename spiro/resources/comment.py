@@ -140,8 +140,9 @@ def save_comment(
     to_user_name =      to_user_name      if to_user_name     else None
   )
   comment_id = Comment.add_comment(comment)
+  # TODO: Save email in the Comment table, to reduce a query
   flag, to_email = User.get_user_email_by_user_id(to_user_id)
-  if (SpiroConfig.email.enabled and flag):
+  if (SpiroConfig.email.enabled and to_email and flag):
     get_email_worker().send_reply_hint(to_email, user_name, comment_content, url)
   return {
     "article_uuid":             comment.article_uuid,

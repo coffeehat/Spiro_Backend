@@ -58,7 +58,7 @@ def _handle_registration_with_email(user_name, user_email, user_passwd=None):
     # We find the very user who has same username and email!
     if users[0].user_role < Role.Visitor.value:
       if user_passwd:
-        if SpiroConfig.email.enabled and not users[0].user_is_email_verified:
+        if SpiroConfig.email.enabled and not users[0].user_is_email_verified and users[0].user_email:
           send_mail_verification(users[0].user_id, users[0].user_name, users[0].user_email)
           raise UserEmailNotVerifedError
         else:
@@ -71,7 +71,7 @@ def _handle_registration_with_email(user_name, user_email, user_passwd=None):
         return _update_visitor_to_registered(users[0].user_id, user_name, user_email, user_passwd)
       else:
         # We don't need password here, so we just return that user
-        return UserInfo(users[0].user_id, users[0].user_name, users[0].user_email, users[0].user_role)
+        return UserInfo(users[0].user_id, users[0].user_name, users[0].user_email, users[0].user_role), True
 
   if flag:
     # We find some users, but they either has different username or different email
@@ -199,7 +199,7 @@ def _handle_registration_without_email(user_name):
   if not flag:
     return _register_new_user(user_name, "")
 
-  return None # TODO: logging this abnormal case, the code path shouldn't be run here
+  return None, False # TODO: logging this abnormal case, the code path shouldn't be run here
 
 def _update_visitor_to_registered(user_id, user_name, user_email, user_passwd):
   User.update_user(
@@ -226,7 +226,7 @@ def _update_visitor_email(user_id, user_name, user_email):
       "user_email": user_email
     }
   )
-  return UserInfo(user_id, user_name, user_email, Role.Visitor.value)
+  return UserInfo(user_id, user_name, user_email, Role.Visitor.value), True
 
 def _register_new_user(user_name, user_email, user_passwd = None):
   user_role = Role.Member.value                 if user_passwd else Role.Visitor.value
