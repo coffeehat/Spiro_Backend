@@ -10,12 +10,12 @@ from ..db import Comment
 
 request_args = EasyDict()
 request_args.get = {
-  "article_id":   webargs_fields.Int(required=True),
+  "article_uuid":   webargs_fields.String(required=True),
 }
 
 response_fields = EasyDict()
 response_fields.get = {
-  "article_id":   restful_fields.Integer(default = 0),
+  "article_uuid":   restful_fields.Integer(default = 0),
   "count":        restful_fields.Integer(default = 0),
   "error_code":   restful_fields.Integer(default = ErrorCode.EC_SUCCESS.value),
   "error_hint":   MarshalJsonItem(default = ""),
@@ -27,14 +27,14 @@ class CommentCountApi(Resource):
   @use_args(request_args.get, location="query")
   @marshal_with(response_fields.get)
   def get(self, args):
-    article_id  = args["article_id"]
+    article_uuid  = args["article_uuid"]
     
-    return get_comment_count(article_id)
+    return get_comment_count(article_uuid)
 
 @handle_exception
-def get_comment_count(article_id):
-  count = Comment.get_comments_count_by_article_id(article_id)
+def get_comment_count(article_uuid):
+  count = Comment.get_comments_count_by_article_uuid(article_uuid)
   return {
-    "article_id": article_id,
+    "article_uuid": article_uuid,
     "count": count
   }

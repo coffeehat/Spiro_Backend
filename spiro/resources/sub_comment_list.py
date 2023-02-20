@@ -13,7 +13,7 @@ from ..db import Comment
 
 request_args = EasyDict()
 request_args.get = {
-  "article_id":               webargs_fields.Int(required=True),
+  "article_uuid":               webargs_fields.String(required=True),
   "parent_comment_id":        webargs_fields.Int(required=True),
   "sub_comment_offset":       webargs_fields.Int(required=True),
   "sub_comment_count":        webargs_fields.Int(required=True)
@@ -21,7 +21,7 @@ request_args.get = {
 
 response_fields = EasyDict()
 response_fields.get = {
-  "article_id":   restful_fields.Integer(),
+  "article_uuid":   restful_fields.String(),
   "sub_comment_list": restful_fields.List(restful_fields.Nested(full_comment_response_fields_without_error)),
   "is_more":      restful_fields.Boolean(),
   "error_code":   restful_fields.Integer(default = ErrorCode.EC_SUCCESS.value),
@@ -34,20 +34,20 @@ class SubCommentListApi(Resource):
   @use_args(request_args.get, location="query")
   @marshal_with(response_fields.get)
   def get(self, args):
-    article_id                  = args["article_id"]
+    article_uuid                  = args["article_uuid"]
     parent_comment_id            = args["parent_comment_id"]
     sub_comment_offset          = args["sub_comment_offset"]
     sub_comment_count           = args["sub_comment_count"]
     
     return get_sub_comment_list(
-      article_id,
+      article_uuid,
       parent_comment_id,
       sub_comment_offset,
       sub_comment_count
     )
 
 @handle_exception
-def get_sub_comment_list(article_id, parent_comment_id, sub_comment_offset, sub_comment_count):
+def get_sub_comment_list(article_uuid, parent_comment_id, sub_comment_offset, sub_comment_count):
   if sub_comment_offset < 0:
     raise ArgInvalid("primary comment offset is less than 0")
 
@@ -68,7 +68,7 @@ def get_sub_comment_list(article_id, parent_comment_id, sub_comment_offset, sub_
 
   if flag:
     return {
-      "article_id": article_id,
+      "article_uuid": article_uuid,
       "sub_comment_list": sub_comments,
       "is_more": is_more
     }

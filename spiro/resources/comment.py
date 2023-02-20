@@ -17,7 +17,7 @@ request_args.get = {
   "comment_id":         webargs_fields.Integer(required=True),
 }
 request_args.post = {
-  "article_id":         webargs_fields.Integer(required=True),
+  "article_uuid":         webargs_fields.String(required=True),
   "comment_content":    webargs_fields.String(required=True),
   "user_name":          webargs_fields.String(missing = ""),
   "user_email":         webargs_fields.String(missing = ""),
@@ -31,7 +31,7 @@ request_args.delete = {
 }
 
 primary_comment_response_fields_without_error = {
-  "article_id":         restful_fields.Integer(default = 0),
+  "article_uuid":         restful_fields.String(default = 0),
   "user_id":            restful_fields.Integer(default = 0),
   "user_name":          restful_fields.String(default = ""),
   "comment_id":         restful_fields.Integer(default = 0),
@@ -71,7 +71,7 @@ class CommentApi(Resource):
   @multi_auth.login_required(role=[Role.Visitor.value, Role.Member.value, Role.Admin.value])
   @marshal_with(response_fields.post)
   def post(self, args):
-    article_id          = args["article_id"]
+    article_uuid          = args["article_uuid"]
     comment_content     = args["comment_content"]
     user_id             = multi_auth.current_user().user_id
     user_name           = multi_auth.current_user().user_name
@@ -82,7 +82,7 @@ class CommentApi(Resource):
     # user_email       = multi_auth.current_user()["user_email"]
 
     return save_comment(
-      article_id, 
+      article_uuid, 
       user_id, 
       user_name, 
       comment_content, 
@@ -104,7 +104,7 @@ class CommentApi(Resource):
 
 @handle_exception
 def save_comment(
-  article_id, 
+  article_uuid, 
   user_id,
   user_name, 
   comment_content, 
@@ -130,7 +130,7 @@ def save_comment(
     pass
 
   comment = Comment(
-    article_id =        article_id,
+    article_uuid =        article_uuid,
     user_id =           user_id,
     user_name =         user_name,
     comment_content =   comment_content,
@@ -144,7 +144,7 @@ def save_comment(
   if (SpiroConfig.email.enabled and flag):
     get_email_worker().send_reply_hint(to_email, user_name, comment_content, url)
   return {
-    "article_id":             comment.article_id,
+    "article_uuid":             comment.article_uuid,
     "user_id":                comment.user_id,
     "user_name":              user_name,
     "comment_id":             comment_id,
@@ -160,7 +160,7 @@ def get_comment(comment_id):
   flag1, comment = Comment.find_comment_by_id(comment_id)
   if flag1:
     return {
-      "article_id":           comment.article_id,
+      "article_uuid":           comment.article_uuid,
       "user_id":              comment.user_id,
       "user_name":            comment.user_name,
       "comment_id":           comment.comment_id,
