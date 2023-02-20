@@ -13,6 +13,7 @@ class _EmailConfig:
   port = 25
   password = ""
   send_addr = ""
+  recv_addr = ""
 
 class _MiscConfig:
   pass_salt = "spiro"

@@ -130,20 +130,23 @@ def save_comment(
     pass
 
   comment = Comment(
-    article_uuid =        article_uuid,
+    article_uuid =      article_uuid,
     user_id =           user_id,
     user_name =         user_name,
     comment_content =   comment_content,
     comment_timestamp = get_utc_timestamp(),
-    parent_comment_id =  parent_comment_id  if parent_comment_id else None,
+    parent_comment_id = parent_comment_id if parent_comment_id else None,
     to_user_id =        to_user_id        if to_user_id       else None,
     to_user_name =      to_user_name      if to_user_name     else None
   )
   comment_id = Comment.add_comment(comment)
-  # TODO: Save email in the Comment table, to reduce a query
-  flag, to_email = User.get_user_email_by_user_id(to_user_id)
-  if (SpiroConfig.email.enabled and to_email and flag):
-    get_email_worker().send_reply_hint(to_email, user_name, comment_content, url)
+  if SpiroConfig.email.enabled and not parent_comment_id and SpiroConfig.email.recv_addr:
+    get_email_worker().send_comment_hint(SpiroConfig.email.recv_addr, user_name, comment_content, url)
+  else:
+    # TODO: Save email in the Comment table, to reduce a query
+    flag, to_email = User.get_user_email_by_user_id(to_user_id)
+    if (SpiroConfig.email.enabled and to_email and flag):
+      get_email_worker().send_reply_hint(to_email, user_name, comment_content, url)
   return {
     "article_uuid":             comment.article_uuid,
     "user_id":                comment.user_id,
