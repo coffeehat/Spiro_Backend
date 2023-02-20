@@ -5,3 +5,4 @@ from .user import UserApi
 from .token_check import TokenCheckApi
 from .sub_comment_list import SubCommentListApi
 from .email_verification import EmailVerificationApi
+from .article_read_count import ArticleReadCountApi

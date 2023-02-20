@@ -3,8 +3,6 @@ from flask_restful import Resource, marshal_with, fields as restful_fields
 from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
-from .comment import response_fields as comment_response_fields
-
 from ..common.exceptions import *
 from ..common.utils import MarshalJsonItem
 from ..common.lock import r_lock

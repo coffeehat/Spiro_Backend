@@ -32,12 +32,13 @@ class Server:
     self._add_resource()
   
   def _add_resource(self):
-    self.api.add_resource(CommentCountApi,   "/" + SpiroConfig.version + "/comment_count")
-    self.api.add_resource(CommentListApi,    "/" + SpiroConfig.version + "/comment_list")
-    self.api.add_resource(CommentApi,        "/" + SpiroConfig.version + "/comment")
-    self.api.add_resource(UserApi,           "/" + SpiroConfig.version + "/user")
-    self.api.add_resource(TokenCheckApi,     "/" + SpiroConfig.version + "/token_check")
-    self.api.add_resource(SubCommentListApi, "/" + SpiroConfig.version + "/sub_comment_list")
+    self.api.add_resource(CommentCountApi,      "/" + SpiroConfig.version + "/comment_count")
+    self.api.add_resource(CommentListApi,       "/" + SpiroConfig.version + "/comment_list")
+    self.api.add_resource(CommentApi,           "/" + SpiroConfig.version + "/comment")
+    self.api.add_resource(UserApi,              "/" + SpiroConfig.version + "/user")
+    self.api.add_resource(TokenCheckApi,        "/" + SpiroConfig.version + "/token_check")
+    self.api.add_resource(SubCommentListApi,    "/" + SpiroConfig.version + "/sub_comment_list")
+    self.api.add_resource(ArticleReadCountApi,  "/" + SpiroConfig.version + "/article_read_count")
 
     if SpiroConfig.email.enabled:
       self.api.add_resource(EmailVerificationApi, "/" + SpiroConfig.version + "/email_verify/<string:veri_id>")
