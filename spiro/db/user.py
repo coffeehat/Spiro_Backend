@@ -94,8 +94,8 @@ class User(db.Model):
       sa.select(sa.func.count().label("count")) \
       .where(User.user_name == user_name) \
       .limit(1)
-    ).first()
-    return ret["count"] > 0
+    ).scalars().first()
+    return ret > 0
 
   @staticmethod
   def is_email_dup(user_email) -> bool:
@@ -103,8 +103,8 @@ class User(db.Model):
       sa.select(sa.func.count().label("count")) \
       .where(User.user_email == user_email) \
       .limit(1)
-    ).first()
-    return ret["count"] > 0
+    ).scalars().first()
+    return ret > 0
 
   @staticmethod
   def add_user(user) -> None:

@@ -25,7 +25,7 @@ class Comment(db.Model):
           RETURNING comment_id"
       ),
       {
-        "article_uuid":                 comment.article_uuid, 
+        "article_uuid":               comment.article_uuid, 
         "user_id":                    comment.user_id,
         "user_name":                  comment.user_name,
         "comment_content":            comment.comment_content, 
@@ -51,48 +51,125 @@ class Comment(db.Model):
       return False, None
 
   @staticmethod
-  def find_rangeof_comments_by_article_uuid(
+  def find_rangeof_comments_by_offset_and_article_uuid(
     article_uuid,
-    primary_comment_offset,
+    primary_start_comment_offset,
     primary_comment_count,
     sub_comment_count
   ):
     if primary_comment_count <= 0 or primary_comment_count is None:
+      # TODO: Do we really need this?
       comments = db.session.execute(sa.select(Comment) \
         .where(sa.and_(Comment.article_uuid == article_uuid, Comment.parent_comment_id == None)) \
         .order_by(Comment.comment_timestamp.desc()) \
-        .offset(primary_comment_offset)
+        .offset(primary_start_comment_offset)
       ).scalars()
     else:
       comments = db.session.execute(sa.select(Comment) \
         .where(sa.and_(Comment.article_uuid == article_uuid, Comment.parent_comment_id == None)) \
         .order_by(Comment.comment_timestamp.desc()) \
-        .offset(primary_comment_offset) \
+        .offset(primary_start_comment_offset) \
         .limit(primary_comment_count)
       ).scalars()
     comments = [comment for comment in comments]
     if comments:
-      comment_ids = [str(comment.comment_id) for comment in comments]
       # Select sub-comment
-      sub_comments = db.session.execute(
-        sa.text(
-          f"SELECT c.* FROM ( \
-              SELECT \
-                c1.*, \
-                ( \
-                  SELECT COUNT(*) + 1 FROM {Comment.__table__.name} AS c2 WHERE c1.parent_comment_id == c2.parent_comment_id AND c2.comment_timestamp < c1.comment_timestamp \
-                ) AS rank \
-              FROM {Comment.__table__.name} AS c1 WHERE c1.parent_comment_id IN {'(' + ','.join(comment_ids) +')'} AND c1.article_uuid == :article_uuid\
-            ) AS c WHERE c.rank <= :sub_comment_count ORDER BY c.comment_timestamp"
-        ),
-        {
-          "sub_comment_count": sub_comment_count,
-          "article_uuid": article_uuid
-        }
+      sub_comments = Comment._find_sub_comments_by_primary_comments_and_article_uuid(
+        article_uuid,
+        comments,
+        sub_comment_count
       )
       return True, comments, [sub_comment for sub_comment in sub_comments]
     else:
       return False, None, None
+
+  @staticmethod
+  def find_rangeof_comments_by_comment_id_and_article_uuid(
+    article_uuid,
+    primary_start_comment_id,
+    primary_comment_count,
+    sub_comment_count,
+    is_newer
+  ):
+    if is_newer:
+      textual_sql = sa.text(
+        f"select * from {Comment.__table__.name} where comment_id > :primary_start_comment_id and article_uuid == :article_uuid and parent_comment_id is null\
+          union \
+          select * from {Comment.__table__.name} where \
+            comment_id == ( \
+              select max(comment_id) from comment where comment_id < :primary_start_comment_id and article_uuid == :article_uuid and parent_comment_id is null\
+            ) order by comment_id asc limit :primary_comment_count"
+      ).bindparams(
+        primary_start_comment_id = primary_start_comment_id,
+        primary_comment_count = primary_comment_count,
+        article_uuid = article_uuid
+      )
+      orm_sql = sa.select(Comment).from_statement(textual_sql)
+      comments = db.session.execute(orm_sql).scalars()
+      # We can also use below statement to get comments
+      # s1 = sa.select(Comment).where(sa.and_(Comment.comment_id > primary_start_comment_id, Comment.article_uuid == :article_uuid, Comment.parent_comment_id == None))
+      # s2 = sa.select(Comment).where(Comment.comment_id == sa.select(sa.func.max(Comment.comment_id)).where(sa.and_(Comment.comment_id < primary_start_comment_id, Comment.article_uuid == :article_uuid, Comment.parent_comment_id == None)))
+      # q  = sa.select(Comment).from_statement(s1.union(s2).order_by(Comment.comment_id.asc()).limit(primary_comment_count))
+      # comments = db.session.execute(q).scalars()
+
+      # comment id from small to big (from old to new)
+      # so we need a reverse to make it from new to old
+      comments = [comment for comment in comments]
+      comments.reverse()
+    else:
+      textual_sql = sa.text(
+        f"select * from {Comment.__table__.name} where comment_id < :primary_start_comment_id and article_uuid == :article_uuid and parent_comment_id is null \
+          union \
+          select * from {Comment.__table__.name} where \
+            comment_id == ( \
+              select min(comment_id) from comment where comment_id > :primary_start_comment_id and article_uuid == :article_uuid and parent_comment_id is null \
+            ) order by comment_id desc limit :primary_comment_count"
+      ).bindparams(
+        primary_start_comment_id = primary_start_comment_id,
+        primary_comment_count = primary_comment_count,
+        article_uuid = article_uuid
+      )
+      orm_sql = sa.select(Comment).from_statement(textual_sql)
+      comments = db.session.execute(orm_sql).scalars()
+
+      # comment id from big to small (from new to old)
+      comments = [comment for comment in comments]
+
+    if comments:
+      # Select sub-comment
+      sub_comments = Comment._find_sub_comments_by_primary_comments_and_article_uuid(
+        article_uuid,
+        comments,
+        sub_comment_count
+      )
+      return True, comments, [sub_comment for sub_comment in sub_comments]
+    else:
+      return False, None, None
+
+  @staticmethod
+  def _find_sub_comments_by_primary_comments_and_article_uuid(
+    article_uuid,
+    primary_comments,
+    sub_comment_count
+  ):
+    comment_ids = [str(comment.comment_id) for comment in primary_comments]
+    # Select sub-comment
+    textual_sql = sa.text(
+      f"SELECT c.* FROM ( \
+          SELECT \
+            c1.*, \
+            ( \
+              SELECT COUNT(*) + 1 FROM {Comment.__table__.name} AS c2 WHERE c1.parent_comment_id == c2.parent_comment_id AND c2.comment_timestamp < c1.comment_timestamp \
+            ) AS rank \
+          FROM {Comment.__table__.name} AS c1 WHERE c1.parent_comment_id IN {'(' + ','.join(comment_ids) +')'} AND c1.article_uuid == :article_uuid\
+        ) AS c WHERE c.rank <= :sub_comment_count ORDER BY c.comment_timestamp"
+    ).bindparams(
+      sub_comment_count = sub_comment_count,
+      article_uuid = article_uuid
+    )
+    orm_sql = sa.select(Comment).from_statement(textual_sql)
+    sub_comments = db.session.execute(orm_sql).scalars()
+    return sub_comments
 
   @staticmethod
   def find_rangeof_sub_comments_by_parent_comment_id(
@@ -122,11 +199,11 @@ class Comment(db.Model):
   @staticmethod
   def get_comments_count_by_article_uuid(article_uuid) -> int:
     count = db.session.execute(
-      sa.select(sa.func.count().label("count")) \
+      sa.select(sa.func.count()) \
       .where(sa.and_(Comment.article_uuid == article_uuid, Comment.parent_comment_id == None)) \
       .limit(1)
-    ).first()
-    return count["count"]
+    ).scalars().first()
+    return count
 
   @staticmethod
   def delete_comment_with_user_check(comment_id, user_id):

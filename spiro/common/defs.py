@@ -7,3 +7,7 @@ class Role(enum.Enum):
 
 class Defaults(enum.Enum):
   UserNameInactive = "Inactive"
+
+class CommentListGetMethod(enum.Enum):
+  COUNT_FROM_OFFSET = 0
+  COUNT_FROM_COMMENT_ID = 1
