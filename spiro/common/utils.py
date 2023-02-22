@@ -54,6 +54,38 @@ def convert_expire_time_to_cookies_expire_string(dt):
 def gen_random_string(length):
   return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
 
+def parse_comments_and_get_is_more_status(
+  comments, 
+  start_comment_id, 
+  comment_count, 
+  is_newer
+):
+  is_more_old = False
+  is_more_new = False
+  comment_ids_to_be_excluded = set()
+  
+  if is_newer:
+    if comments[-1].comment_id < start_comment_id:
+      is_more_old = True
+      comment_ids_to_be_excluded.add(comments[-1].comment_id)
+      del comments[-1]
+    if len(comments) > comment_count:
+      is_more_new = True
+      for i in range(0, len(comments) - comment_count):
+        comment_ids_to_be_excluded.add(comments[0].comment_id)
+        del comments[0]
+  else:
+    if comments[0].comment_id > start_comment_id:
+      is_more_new = True
+      comment_ids_to_be_excluded.add(comments[0].comment_id)
+      del comments[0]
+    if len(comments) > comment_count:
+      is_more_old = True
+      for i in range(0, len(comments) - comment_count):
+        comment_ids_to_be_excluded.add(comments[-1].comment_id)
+        del comments[-1]
+  return comment_ids_to_be_excluded, is_more_old, is_more_new
+
 class MarshalJsonItem(restful_fields.Raw):
   def format(self, value):
     return value

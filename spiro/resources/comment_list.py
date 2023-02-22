@@ -9,7 +9,7 @@ from .comment import primary_comment_response_fields_without_error, \
 
 from ..common.defs import CommentListGetMethod
 from ..common.exceptions import *
-from ..common.utils import MarshalJsonItem
+from ..common.utils import MarshalJsonItem, parse_comments_and_get_is_more_status
 from ..common.lock import r_lock
 from ..db import Comment
 
@@ -25,7 +25,7 @@ request_args.get = {
 
   # Special Argument for method COUNT_FROM_COMMENT_ID
   "primary_start_comment_id":       webargs_fields.Int(),
-  # Whether to return comments newer than anchor (inclusive)
+  # Whether to return comments newer than primary_start_comment_id (inclusive)
   "is_newer":                       webargs_fields.Boolean(missing=False)
   
 }
@@ -54,33 +54,36 @@ class CommentListApi(Resource):
   @use_args(request_args.get, location="query")
   @marshal_with(response_fields.get)
   def get(self, args):
-    article_uuid                    = args["article_uuid"]
-    primary_comment_count           = args["primary_comment_count"]
-    sub_comment_count               = args["sub_comment_count"]
-    method                          = args["method"]
-
-    if method == CommentListGetMethod.COUNT_FROM_OFFSET.value:
-      primary_start_comment_offset  = args["primary_start_comment_offset"]
-      return get_comment_list_by_offset(
-        article_uuid,
-        primary_start_comment_offset,
-        primary_comment_count,
-        sub_comment_count
-      )
-    elif method == CommentListGetMethod.COUNT_FROM_COMMENT_ID.value:
-      primary_start_comment_id      = args["primary_start_comment_id"]
-      is_newer                      = args["is_newer"]
-      return get_comment_list_by_id(
-        article_uuid,
-        primary_start_comment_id,
-        primary_comment_count,
-        sub_comment_count,
-        is_newer
-      )
-    else:
-      raise ArgInvalid
+    return handle_request(args)
 
 @handle_exception
+def handle_request(args):
+  article_uuid                    = args["article_uuid"]
+  primary_comment_count           = args["primary_comment_count"]
+  sub_comment_count               = args["sub_comment_count"]
+  method                          = args["method"]
+
+  if method == CommentListGetMethod.COUNT_FROM_OFFSET.value:
+    primary_start_comment_offset  = args["primary_start_comment_offset"]
+    return get_comment_list_by_offset(
+      article_uuid,
+      primary_start_comment_offset,
+      primary_comment_count,
+      sub_comment_count
+    )
+  elif method == CommentListGetMethod.COUNT_FROM_COMMENT_ID.value:
+    primary_start_comment_id      = args["primary_start_comment_id"]
+    is_newer                      = args["is_newer"]
+    return get_comment_list_by_id(
+      article_uuid,
+      primary_start_comment_id,
+      primary_comment_count,
+      sub_comment_count,
+      is_newer
+    )
+  else:
+    raise ArgInvalid
+
 def get_comment_list_by_offset(article_uuid, primary_start_comment_offset, primary_comment_count, sub_comment_count):
   if primary_start_comment_offset < 0:
     raise ArgInvalid("primary comment offset is less than 0")
@@ -142,30 +145,14 @@ def get_comment_list_by_id(article_uuid, primary_start_comment_id, primary_comme
   )
 
   if flag:
-    primary_is_more_old = False
-    primary_is_more_new = False
-    primary_ids_to_be_excluded = set()
-    
-    if is_newer:
-      if comments[-1].comment_id < primary_start_comment_id:
-        primary_is_more_old = True
-        primary_ids_to_be_excluded.add(comments[-1].comment_id)
-        del comments[-1]
-      if len(comments) > primary_comment_count:
-        primary_is_more_new = True
-        for i in range(0, len(comments) - primary_comment_count):
-          primary_ids_to_be_excluded.add(comments[0].comment_id)
-          del comments[0]
-    else:
-      if comments[0].comment_id > primary_start_comment_id:
-        primary_is_more_new = True
-        primary_ids_to_be_excluded.add(comments[0].comment_id)
-        del comments[0]
-      if len(comments) > primary_comment_count:
-        primary_is_more_old = True
-        for i in range(0, len(comments) - primary_comment_count):
-          primary_ids_to_be_excluded.add(comments[-1].comment_id)
-          del comments[-1]
+    primary_ids_to_be_excluded, \
+    primary_is_more_old, \
+    primary_is_more_new = parse_comments_and_get_is_more_status(
+      comments,
+      primary_start_comment_id,
+      primary_comment_count,
+      is_newer
+    )
 
     _compose_primary_and_sub_comments(comments, sub_comments, primary_ids_to_be_excluded, sub_comment_count)
 

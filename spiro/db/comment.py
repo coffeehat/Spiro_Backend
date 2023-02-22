@@ -174,25 +174,79 @@ class Comment(db.Model):
   @staticmethod
   def find_rangeof_sub_comments_by_parent_comment_id(
     parent_comment_id,
-    sub_comment_offset,
+    sub_start_comment_offset,
     sub_comment_count
   ):
     if sub_comment_count <= 0 or sub_comment_count is None:
       sub_comments = db.session.execute(sa.select(Comment) \
         .where(Comment.parent_comment_id == parent_comment_id) \
         .order_by(Comment.comment_timestamp.asc()) \
-        .offset(sub_comment_offset)
+        .offset(sub_start_comment_offset)
       ).scalars()
     else:
       sub_comments = db.session.execute(sa.select(Comment) \
         .where(Comment.parent_comment_id == parent_comment_id) \
         .order_by(Comment.comment_timestamp.asc()) \
-        .offset(sub_comment_offset) \
+        .offset(sub_start_comment_offset) \
         .limit(sub_comment_count)
       ).scalars()
     
     if sub_comments:
       return True, [sub_comment for sub_comment in sub_comments]
+    else:
+      return False, None
+
+  @staticmethod
+  def find_rangeof_sub_comments_by_comment_id_and_article_uuid(
+    article_uuid,
+    parent_comment_id,
+    sub_start_comment_id,
+    sub_comment_count,
+    is_newer
+  ):
+    if is_newer:
+      textual_sql = sa.text(
+        f"select * from {Comment.__table__.name} where comment_id > :sub_start_comment_id and article_uuid == :article_uuid and parent_comment_id == :parent_comment_id \
+          union \
+          select * from {Comment.__table__.name} where \
+            comment_id == ( \
+              select max(comment_id) from comment where comment_id < :sub_start_comment_id and article_uuid == :article_uuid and parent_comment_id == :parent_comment_id\
+            ) order by comment_id asc limit :sub_comment_count"
+      ).bindparams(
+        sub_start_comment_id = sub_start_comment_id,
+        sub_comment_count = sub_comment_count,
+        article_uuid = article_uuid,
+        parent_comment_id = parent_comment_id
+      )
+      orm_sql = sa.select(Comment).from_statement(textual_sql)
+      sub_comments = db.session.execute(orm_sql).scalars()
+
+      # comment id from small to big (from old to new)
+      # so we need a reverse to make it from new to old
+      sub_comments = [sub_comment for sub_comment in sub_comments]
+      sub_comments.reverse()
+    else:
+      textual_sql = sa.text(
+        f"select * from {Comment.__table__.name} where comment_id < :sub_start_comment_id and article_uuid == :article_uuid and parent_comment_id == :parent_comment_id \
+          union \
+          select * from {Comment.__table__.name} where \
+            comment_id == ( \
+              select min(comment_id) from comment where comment_id > :sub_start_comment_id and article_uuid == :article_uuid and parent_comment_id == :parent_comment_id \
+            ) order by comment_id desc limit :sub_comment_count"
+      ).bindparams(
+        sub_start_comment_id = sub_start_comment_id,
+        sub_comment_count = sub_comment_count,
+        article_uuid = article_uuid,
+        parent_comment_id = parent_comment_id
+      )
+      orm_sql = sa.select(Comment).from_statement(textual_sql)
+      sub_comments = db.session.execute(orm_sql).scalars()
+
+      # comment id from big to small (from new to old)
+      sub_comments = [sub_comment for sub_comment in sub_comments]
+    
+    if sub_comments:
+      return True, sub_comments
     else:
       return False, None
 
