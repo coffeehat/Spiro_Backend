@@ -79,7 +79,7 @@ class Comment(db.Model):
         comments,
         sub_comment_count
       )
-      return True, comments, [sub_comment for sub_comment in sub_comments]
+      return True, comments, sub_comments
     else:
       return False, None, None
 
@@ -142,7 +142,49 @@ class Comment(db.Model):
         comments,
         sub_comment_count
       )
-      return True, comments, [sub_comment for sub_comment in sub_comments]
+      return True, comments, sub_comments
+    else:
+      return False, None, None
+
+  @staticmethod
+  def find_rangeof_comments_bilateral_by_comment_id_and_article_uuid(
+    article_uuid,
+    primary_start_comment_id,
+    primary_single_side_comment_count,
+    sub_comment_count
+  ):
+    textual_sql = sa.text(
+      f"select * from \
+          (select * from {Comment.__table__.name} \
+            where parent_comment_id is null \
+              and comment_id <= :primary_start_comment_id \
+              and article_uuid == :article_uuid \
+            order by comment_id desc limit :primary_single_side_comment_count) \
+        union \
+        select * from \
+          (select * from {Comment.__table__.name} \
+            where parent_comment_id is null \
+              and comment_id >= :primary_start_comment_id \
+              and article_uuid == :article_uuid \
+            order by comment_id asc limit :primary_single_side_comment_count) \
+        order by comment_id desc"
+    ).bindparams(
+      primary_start_comment_id = primary_start_comment_id,
+      primary_single_side_comment_count = primary_single_side_comment_count + 1,
+      article_uuid = article_uuid
+    )
+    orm_sql = sa.select(Comment).from_statement(textual_sql)
+    comments = db.session.execute(orm_sql).scalars()
+    comments = [comment for comment in comments]
+
+    if comments and \
+      next((comment for comment in comments if comment.comment_id == primary_start_comment_id), None):
+      sub_comments = Comment._find_sub_comments_by_primary_comments_and_article_uuid(
+        article_uuid,
+        comments,
+        sub_comment_count
+      )
+      return True, comments, sub_comments
     else:
       return False, None, None
 
@@ -169,7 +211,7 @@ class Comment(db.Model):
     )
     orm_sql = sa.select(Comment).from_statement(textual_sql)
     sub_comments = db.session.execute(orm_sql).scalars()
-    return sub_comments
+    return [sub_comment for sub_comment in sub_comments]
 
   @staticmethod
   def find_rangeof_sub_comments_by_parent_comment_id(

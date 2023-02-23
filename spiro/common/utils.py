@@ -54,6 +54,27 @@ def convert_expire_time_to_cookies_expire_string(dt):
 def gen_random_string(length):
   return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
 
+def compose_primary_and_sub_comments(comments, sub_comments, primary_ids_to_be_excluded, sub_comment_count):
+  comment_id_mapping = {}
+  for i, comment in enumerate(comments):
+    comment.sub_comment_list = []
+    comment_id_mapping[comment.comment_id] = i
+
+  for sub_comment in sub_comments:
+    if sub_comment.parent_comment_id in primary_ids_to_be_excluded:
+      continue
+    index = comment_id_mapping[sub_comment.parent_comment_id]
+    comments[index].sub_comment_list.append(sub_comment)
+
+  for comment in comments:
+    comment.is_more_new = False
+    if comment.sub_comment_list:
+      comment.is_more_old = len(comment.sub_comment_list) == sub_comment_count + 1
+      if comment.is_more_old:
+        del comment.sub_comment_list[-1]
+    else:
+      comment.is_more_old = False
+
 def parse_comments_and_get_is_more_status(
   comments, 
   start_comment_id, 

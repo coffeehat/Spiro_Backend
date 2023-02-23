@@ -9,7 +9,9 @@ from .comment import primary_comment_response_fields_without_error, \
 
 from ..common.defs import CommentListGetMethod
 from ..common.exceptions import *
-from ..common.utils import MarshalJsonItem, parse_comments_and_get_is_more_status
+from ..common.utils import MarshalJsonItem, \
+  parse_comments_and_get_is_more_status, \
+  compose_primary_and_sub_comments
 from ..common.lock import r_lock
 from ..db import Comment
 
@@ -111,7 +113,7 @@ def get_comment_list_by_offset(article_uuid, primary_start_comment_offset, prima
       primary_ids_to_be_excluded.add(comments[-1].comment_id)
       del comments[-1]
 
-    _compose_primary_and_sub_comments(comments, sub_comments, primary_ids_to_be_excluded, sub_comment_count)
+    compose_primary_and_sub_comments(comments, sub_comments, primary_ids_to_be_excluded, sub_comment_count)
   
     return {
       "article_uuid"    : article_uuid,
@@ -154,7 +156,7 @@ def get_comment_list_by_id(article_uuid, primary_start_comment_id, primary_comme
       is_newer
     )
 
-    _compose_primary_and_sub_comments(comments, sub_comments, primary_ids_to_be_excluded, sub_comment_count)
+    compose_primary_and_sub_comments(comments, sub_comments, primary_ids_to_be_excluded, sub_comment_count)
 
     return {
       "article_uuid"    : article_uuid,
@@ -168,25 +170,4 @@ def get_comment_list_by_id(article_uuid, primary_start_comment_id, primary_comme
       "comment_list"    : [],
       "is_more_new"     : False, 
       "is_more_old"     : False
-    } 
-
-def _compose_primary_and_sub_comments(comments, sub_comments, primary_ids_to_be_excluded, sub_comment_count):
-  comment_id_mapping = {}
-  for i, comment in enumerate(comments):
-    comment.sub_comment_list = []
-    comment_id_mapping[comment.comment_id] = i
-
-  for sub_comment in sub_comments:
-    if sub_comment.parent_comment_id in primary_ids_to_be_excluded:
-      continue
-    index = comment_id_mapping[sub_comment.parent_comment_id]
-    comments[index].sub_comment_list.append(sub_comment)
-
-  for comment in comments:
-    comment.is_more_new = False
-    if comment.sub_comment_list:
-      comment.is_more_old = len(comment.sub_comment_list) == sub_comment_count + 1
-      if comment.is_more_old:
-        del comment.sub_comment_list[-1]
-    else:
-      comment.is_more_old = False
+    }

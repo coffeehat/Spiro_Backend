@@ -39,6 +39,7 @@ class Server:
     self.api.add_resource(TokenCheckApi,        "/" + SpiroConfig.version + "/token_check")
     self.api.add_resource(SubCommentListApi,    "/" + SpiroConfig.version + "/sub_comment_list")
     self.api.add_resource(ArticleReadCountApi,  "/" + SpiroConfig.version + "/article_read_count")
+    self.api.add_resource(AnchorCommentListApi, "/" + SpiroConfig.version + "/anchor_comment_list")
 
     if SpiroConfig.email.enabled:
       self.api.add_resource(EmailVerificationApi, "/" + SpiroConfig.version + "/email_verify/<string:veri_id>")
