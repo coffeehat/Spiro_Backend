@@ -238,10 +238,10 @@ class Comment(db.Model):
           SELECT \
             c1.*, \
             ( \
-              SELECT COUNT(*) + 1 FROM {Comment.__table__.name} AS c2 WHERE c1.parent_comment_id == c2.parent_comment_id AND c2.comment_timestamp < c1.comment_timestamp \
+              SELECT COUNT(*) + 1 FROM {Comment.__table__.name} AS c2 WHERE c1.parent_comment_id == c2.parent_comment_id AND c2.comment_id > c1.comment_id \
             ) AS rank \
           FROM {Comment.__table__.name} AS c1 WHERE c1.parent_comment_id IN {'(' + ','.join(comment_ids) +')'} AND c1.article_uuid == :article_uuid\
-        ) AS c WHERE c.rank <= :sub_comment_count ORDER BY c.comment_timestamp"
+        ) AS c WHERE c.rank <= :sub_comment_count ORDER BY c.comment_id DESC"
     ).bindparams(
       sub_comment_count = sub_comment_count,
       article_uuid = article_uuid
@@ -259,13 +259,13 @@ class Comment(db.Model):
     if sub_comment_count <= 0 or sub_comment_count is None:
       sub_comments = db.session.execute(sa.select(Comment) \
         .where(Comment.parent_comment_id == parent_comment_id) \
-        .order_by(Comment.comment_timestamp.asc()) \
+        .order_by(Comment.comment_id.desc()) \
         .offset(sub_start_comment_offset)
       ).scalars()
     else:
       sub_comments = db.session.execute(sa.select(Comment) \
         .where(Comment.parent_comment_id == parent_comment_id) \
-        .order_by(Comment.comment_timestamp.asc()) \
+        .order_by(Comment.comment_id.desc()) \
         .offset(sub_start_comment_offset) \
         .limit(sub_comment_count)
       ).scalars()
