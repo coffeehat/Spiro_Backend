@@ -189,6 +189,43 @@ class Comment(db.Model):
       return False, None, None
 
   @staticmethod
+  def find_rangeof_sub_comments_bilateral_by_comment_id_and_article_uuid(
+    article_uuid,
+    sub_start_comment_id,
+    sub_single_side_comment_count
+  ):
+    textual_sql = sa.text(
+      f"select * from \
+          (select * from {Comment.__table__.name} \
+            where parent_comment_id == ( \
+                select parent_comment_id from {Comment.__table__.name} where comment_id == :sub_start_comment_id) \
+              and comment_id <= :sub_start_comment_id \
+              and article_uuid == :article_uuid \
+            order by comment_id desc limit :sub_single_side_comment_count) \
+        union \
+        select * from \
+          (select * from {Comment.__table__.name} \
+            where parent_comment_id == ( \
+                select parent_comment_id from {Comment.__table__.name} where comment_id == :sub_start_comment_id) \
+              and comment_id >= :sub_start_comment_id \
+              and article_uuid == :article_uuid \
+            order by comment_id asc limit :sub_single_side_comment_count) \
+        order by comment_id desc"
+    ).bindparams(
+      sub_start_comment_id = sub_start_comment_id,
+      sub_single_side_comment_count = sub_single_side_comment_count + 1,
+      article_uuid = article_uuid
+    )
+    orm_sql = sa.select(Comment).from_statement(textual_sql)
+    sub_comments = db.session.execute(orm_sql).scalars()
+    sub_comments = [comment for comment in sub_comments]
+
+    if sub_comments:
+      return True, sub_comments
+    else:
+      return False, None
+
+  @staticmethod
   def _find_sub_comments_by_primary_comments_and_article_uuid(
     article_uuid,
     primary_comments,

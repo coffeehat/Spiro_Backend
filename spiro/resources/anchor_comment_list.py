@@ -8,7 +8,9 @@ from webargs.flaskparser import use_args
 from .comment_list import response_fields
 from ..common.exceptions import *
 from ..common.lock import r_lock
-from ..common.utils import compose_primary_and_sub_comments
+from ..common.utils import compose_primary_and_sub_comments, \
+  parse_bilateral_comments_and_get_is_more_status, \
+  compose_primary_and_sub_comments_with_sub_anchor
 from ..db import Comment
 
 anchor_pattern = re.compile("spirorips_([ps])_([0-9]+)")
@@ -17,10 +19,14 @@ request_args = EasyDict()
 request_args.get = {
   "article_uuid"                        : webargs_fields.String(required=True),
   "anchor"                              : webargs_fields.String(required=True),
-  "sub_comment_count"                   : webargs_fields.Int(missing=5),
   "primary_single_side_comment_count"   : webargs_fields.Int(missing=2),
-  "primary_single_side_sub_comment_count"
-                                        : webargs_fields.Int(missing=2)
+
+  # If anchor is primary comment
+  "sub_comment_count"                   : webargs_fields.Int(missing=5),
+
+  # If anchor is sub comment
+  "sub_single_side_comment_count"
+                                        : webargs_fields.Int(missing=2),
 }
 
 class AnchorCommentListApi(Resource):
@@ -34,11 +40,13 @@ class AnchorCommentListApi(Resource):
 def handle_request(args):
   article_uuid                          = args["article_uuid"]
   anchor                                = args["anchor"]
-  sub_comment_count                     = args["sub_comment_count"]
   primary_single_side_comment_count     = args["primary_single_side_comment_count"]
-  primary_single_side_sub_comment_count = args["primary_single_side_sub_comment_count"]
+  sub_comment_count                     = args["sub_comment_count"]
 
-  is_primary, comment_id = parse_anchor(anchor)
+  # If anchor is sub comment
+  sub_single_side_comment_count         = args["sub_single_side_comment_count"]
+
+  is_primary, comment_id = _parse_anchor(anchor)
   if is_primary:
     return get_primary_comment(
       article_uuid,
@@ -47,7 +55,13 @@ def handle_request(args):
       sub_comment_count
     )
   else:
-    pass
+    return get_sub_comment(
+      article_uuid,
+      comment_id,
+      primary_single_side_comment_count,
+      sub_single_side_comment_count,
+      sub_comment_count
+    )
 
 def get_primary_comment(
   article_uuid, 
@@ -72,19 +86,12 @@ def get_primary_comment(
   )
 
   if flag:
-    primary_is_more_old = False
-    primary_is_more_new = False
-    primary_ids_to_be_excluded = set()
-    if len([comment for comment in comments if comment.comment_id > primary_start_comment_id]) \
-      == primary_single_side_comment_count + 1:
-      primary_is_more_new = True
-      primary_ids_to_be_excluded.add(comments[0].comment_id)
-      del comments[0]
-    if len([comment for comment in comments if comment.comment_id < primary_start_comment_id]) \
-      == primary_single_side_comment_count + 1:
-      primary_is_more_old = True
-      primary_ids_to_be_excluded.add(comments[-1].comment_id)
-      del comments[-1]
+    primary_ids_to_be_excluded, primary_is_more_old, primary_is_more_new \
+      = parse_bilateral_comments_and_get_is_more_status(
+        comments,
+        primary_start_comment_id,
+        primary_single_side_comment_count
+      )
 
     compose_primary_and_sub_comments(comments, sub_comments, primary_ids_to_be_excluded, sub_comment_count)
 
@@ -97,7 +104,72 @@ def get_primary_comment(
   else:
     raise DbNotFound
 
-def parse_anchor(anchor):
+def get_sub_comment(
+  article_uuid,
+  comment_id,
+  primary_single_side_comment_count,
+  sub_single_side_comment_count,
+  sub_comment_count
+):
+  if primary_single_side_comment_count < 0:
+    raise ArgInvalid("primary comment count is less than 0")
+
+  # TODO: restrict primary_comment_count and sub_comment_count below 128?
+
+  if sub_single_side_comment_count < 0:
+    raise ArgInvalid("sub comment count is less than 0")
+
+  flag, anchor_sub_comments \
+    = Comment.find_rangeof_sub_comments_bilateral_by_comment_id_and_article_uuid(
+      article_uuid,
+      comment_id,
+      sub_single_side_comment_count + 1
+    )
+
+  if flag:
+    _, anchor_sub_is_more_old, anchor_sub_is_more_new \
+      = parse_bilateral_comments_and_get_is_more_status(
+        anchor_sub_comments,
+        comment_id,
+        sub_single_side_comment_count
+      )
+
+    primary_start_comment_id = anchor_sub_comments[0].parent_comment_id
+    _, comments, sub_comments \
+      = Comment.find_rangeof_comments_bilateral_by_comment_id_and_article_uuid(
+      article_uuid,
+      primary_start_comment_id,
+      primary_single_side_comment_count + 1,
+      sub_comment_count + 1
+    )
+
+    primary_ids_to_be_excluded, primary_is_more_old, primary_is_more_new \
+      = parse_bilateral_comments_and_get_is_more_status(
+        comments,
+        primary_start_comment_id,
+        primary_single_side_comment_count
+      )
+
+    compose_primary_and_sub_comments_with_sub_anchor(
+      comments,
+      sub_comments,
+      primary_ids_to_be_excluded,
+      sub_comment_count,
+      anchor_sub_comments,
+      anchor_sub_is_more_old,
+      anchor_sub_is_more_new
+    )
+
+    return {
+      "article_uuid"    : article_uuid,
+      "comment_list"    : comments,
+      "is_more_new"     : primary_is_more_new, 
+      "is_more_old"     : primary_is_more_old
+    }
+  else:
+    raise DbNotFound
+
+def _parse_anchor(anchor):
   """
     The format of anchor should be:
       spiro_{p or s}_{id}
