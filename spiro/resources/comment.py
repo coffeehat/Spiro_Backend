@@ -1,5 +1,6 @@
 from easydict import EasyDict
 from flask_restful import Resource, marshal_with, fields as restful_fields
+from urllib.parse import urljoin
 from webargs import fields as webargs_fields
 from webargs.flaskparser import use_args
 
@@ -141,12 +142,12 @@ def save_comment(
   )
   comment_id = Comment.add_comment(comment)
   if SpiroConfig.email.enabled and not parent_comment_id and SpiroConfig.email.recv_addr:
-    get_email_worker().send_comment_hint(SpiroConfig.email.recv_addr, user_name, comment_content, url)
+    get_email_worker().send_comment_hint(SpiroConfig.email.recv_addr, user_name, comment_content, urljoin(url, f"#spirorips_p_{comment_id}"))
   else:
     # TODO: Save email in the Comment table, to reduce a query
     flag, to_email = User.get_user_email_by_user_id(to_user_id)
     if (SpiroConfig.email.enabled and to_email and flag):
-      get_email_worker().send_reply_hint(to_email, user_name, comment_content, url)
+      get_email_worker().send_reply_hint(to_email, user_name, comment_content, urljoin(url, f"#spirorips_s_{comment_id}"))
   return {
     "article_uuid":             comment.article_uuid,
     "user_id":                comment.user_id,
