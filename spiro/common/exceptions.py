@@ -42,10 +42,12 @@ class ErrorCode(enum.Enum):
   EC_ARG_NOUSERNAME_ERROR = 102
   EC_ARG_NOEMAIL_BUT_HASPASSWD_ERROR = 103
   EC_ARG_EMPTY_COMMENT = 104
+  EC_ARG_INVALID_ANCHOR = 105
 
   # Database Error
   EC_DB_GENERIC_ERROR = 200
   EC_DB_NOT_FOUND_ERROR = 201
+  EC_DB_ANCHOR_NOT_FOUND_ERROR = 202
   
   # User Error
   EC_USER_GENERIC_ERROR = 300
@@ -164,6 +166,15 @@ class ArgEmptyComment(ArgException):
       http_status_code = 403
     )
 
+class ArgInvalidAnchor(ArgException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_ARG_INVALID_ANCHOR,
+      http_status_code = 403
+    )
+
 # Exceptions for Db
 
 class DbException(CommonException):
@@ -181,6 +192,15 @@ class DbNotFound(DbException):
       error_hint = error_hint,
       error_msg  = error_msg,
       error_code = ErrorCode.EC_DB_NOT_FOUND_ERROR,
+      http_status_code = 404
+    )
+
+class DbAnchorNotFound(DbException):
+  def __init__(self, error_hint = "", error_msg = ""):
+    super(CommonException, self).__init__(
+      error_hint = error_hint,
+      error_msg  = error_msg,
+      error_code = ErrorCode.EC_DB_ANCHOR_NOT_FOUND_ERROR,
       http_status_code = 404
     )
 

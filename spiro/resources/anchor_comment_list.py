@@ -102,7 +102,7 @@ def get_primary_comment(
       "is_more_old"     : primary_is_more_old
     }
   else:
-    raise DbNotFound
+    raise DbAnchorNotFound
 
 def get_sub_comment(
   article_uuid,
@@ -167,7 +167,7 @@ def get_sub_comment(
       "is_more_old"     : primary_is_more_old
     }
   else:
-    raise DbNotFound
+    raise DbAnchorNotFound
 
 def _parse_anchor(anchor):
   """
@@ -185,4 +185,4 @@ def _parse_anchor(anchor):
     return comment_type == "p", comment_id
   else:
     # TODO: Add new exception called invalid anchor
-    raise ArgInvalid
+    raise ArgInvalidAnchor
