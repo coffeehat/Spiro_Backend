@@ -1,6 +1,7 @@
 import typing
 import sqlalchemy as sa
 
+from ..common.defs import CommentDeleteType
 from ..db import db
 
 class Comment(db.Model):
@@ -8,7 +9,7 @@ class Comment(db.Model):
   article_uuid          = sa.Column(sa.ForeignKey("article.article_uuid"),  nullable=False)
   user_id               = sa.Column(sa.ForeignKey("user.user_id"),          nullable=False)
   user_name             = sa.Column(sa.ForeignKey("user.user_name"),        nullable=False)
-  comment_content       = sa.Column(sa.String,                              nullable=False)
+  comment_content       = sa.Column(sa.String,                              nullable=True) # If empty, it's a deleted comment
   comment_timestamp     = sa.Column(sa.Integer,                             nullable=False)
   # For sub-comment
   parent_comment_id     = sa.Column(sa.ForeignKey("comment.comment_id"),    nullable=True)
@@ -339,10 +340,86 @@ class Comment(db.Model):
     return count
 
   @staticmethod
-  def delete_comment_with_user_check(comment_id, user_id):
-    result = db.session.execute(
-      sa.delete(Comment) \
-      .where(sa.and_(Comment.comment_id == comment_id, Comment.user_id == user_id)) \
+  def delete_comment_with_user_check(comment_id, user_id, is_primary):
+    if is_primary:
+      count = Comment._get_sub_comments_count_by_comment_id_with_user_check(comment_id, user_id)
+      if count:
+        # So the comment_id definitly exists, and truly is a primary comment
+        result = db.session.execute(
+          sa.update(Comment) \
+          .values(comment_content = "") \
+          .where(sa.and_(Comment.comment_id == comment_id, Comment.user_id == user_id, Comment.parent_comment_id == None)) \
+        )
+        db.session.commit()
+        return CommentDeleteType.DELETE_BY_MARK, 1
+      else:
+        # At least this comment has no sub-comments, and if it can be deleted by checking parent_comment_id is null, it is truly a primary comment
+        result = db.session.execute(
+          sa.delete(Comment) \
+          .where(sa.and_(Comment.comment_id == comment_id, Comment.user_id == user_id, Comment.parent_comment_id == None)) \
+        )
+        db.session.commit()
+        return CommentDeleteType.DELETE_DIRECTLY, result.rowcount
+    else:
+      flag, sub_comment = Comment._find_sub_comment_by_sub_comment_user_id(comment_id, user_id)
+      if flag:
+        parent_comment_id = sub_comment.parent_comment_id
+        count = Comment._get_sub_comments_count_by_deleted_comment_id(parent_comment_id)
+        if count == 1:
+          result = db.session.execute(
+            sa.delete(Comment) \
+            .where(sa.or_( \
+              sa.and_(Comment.comment_id == comment_id, Comment.user_id == user_id), \
+              Comment.comment_id == parent_comment_id)) \
+          )
+          db.session.commit()
+          return CommentDeleteType.DELETE_DIRECTLY_WITH_PARENT, result.rowcount
+        else:
+          result = db.session.execute(
+            sa.delete(Comment) \
+            .where(sa.and_(Comment.comment_id == comment_id, Comment.user_id == user_id)) \
+          )
+          db.session.commit()
+          return CommentDeleteType.DELETE_DIRECTLY, result.rowcount
+      else:
+        return CommentDeleteType.DELETE_UNDEFINED, 0
+
+  @staticmethod
+  def _get_sub_comments_count_by_deleted_comment_id(comment_id) -> int:
+    textual_sql = sa.text(
+      f"SELECT COUNT(*) FROM {Comment.__table__.name} \
+        WHERE parent_comment_id == (SELECT comment_id FROM {Comment.__table__.name} \
+          WHERE comment_id == :comment_id \
+            AND comment_content == '' \
+            AND parent_comment_id IS NULL)"
+    ).bindparams(
+      comment_id = comment_id
     )
-    db.session.commit()
-    return result.rowcount
+    count = db.session.execute(textual_sql).scalars().first()
+    return count
+
+  @staticmethod
+  def _get_sub_comments_count_by_comment_id_with_user_check(comment_id, user_id) -> int:
+    textual_sql = sa.text(
+      f"SELECT COUNT(*) FROM {Comment.__table__.name} \
+        WHERE parent_comment_id == (SELECT comment_id FROM {Comment.__table__.name} \
+          WHERE comment_id == :comment_id \
+            AND user_id == :user_id \
+            AND parent_comment_id IS NULL)"
+    ).bindparams(
+      comment_id = comment_id,
+      user_id = user_id
+    )
+    count = db.session.execute(textual_sql).scalars().first()
+    return count
+
+  @staticmethod
+  def _find_sub_comment_by_sub_comment_user_id(sub_comment_id, user_id):
+    sub_comment = db.session.execute(sa.select(Comment) \
+      .where(Comment.comment_id == sub_comment_id, Comment.user_id == user_id, Comment.parent_comment_id != None) \
+      .limit(1)
+    ).scalars().first()
+    if sub_comment:
+      return True, sub_comment
+    else:
+      return False, None

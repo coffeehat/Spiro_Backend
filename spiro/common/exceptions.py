@@ -11,7 +11,7 @@ def handle_exception(func):
     except CommonException as e:
       return e.get_error_info(), e.get_http_status()
     except Exception as e:
-      return {"error_code": ErrorCode.EC_GENERIC_ERROR.value}, 500
+      return {"error_code": ErrorCode.EC_INTERNAL_ERROR.value}, 500
     return comment
   return wrapper
 
@@ -25,7 +25,7 @@ def handle_exception_tlocal(func):
       g.status = e.http_status_code
       return None
     except Exception as e:
-      g.error = {"error_code": ErrorCode.EC_GENERIC_ERROR.value}
+      g.error = {"error_code": ErrorCode.EC_INTERNAL_ERROR.value}
       g.status = 500
       return None
   return wrapper
@@ -80,7 +80,7 @@ class ErrorCode(enum.Enum):
   EC_USER_UNAUTHORIZED_ERROR = 399
 
   EC_COMMENT_ERROR = 400
-  EC_COMMENT_DELETE_USER_DONT_MATCH = 401
+  EC_COMMENT_DELETE_ERROR = 401
 
 # TODO: refine the http status code
 
@@ -422,11 +422,11 @@ class CommentException(CommonException):
       http_status_code = 400
     )
 
-class CommentUserDontMatch(CommentException):
+class CommentDeleteError(CommentException):
   def __init__(self, error_hint = "", error_msg = ""):
     super(CommonException, self).__init__(
       error_hint = error_hint,
       error_msg  = error_msg,
-      error_code = ErrorCode.EC_COMMENT_DELETE_USER_DONT_MATCH,
+      error_code = ErrorCode.EC_COMMENT_DELETE_ERROR,
       http_status_code = 400
     )

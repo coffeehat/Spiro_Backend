@@ -6,7 +6,7 @@ from webargs.flaskparser import use_args
 
 from ..auth.multi_auth import multi_auth
 from ..config import SpiroConfig
-from ..common.defs import Role
+from ..common.defs import Role, CommentDeleteType
 from ..common.email import get_email_worker
 from ..common.exceptions import *
 from ..common.lock import r_lock, w_lock
@@ -28,7 +28,8 @@ request_args.post = {
   "url":                webargs_fields.String(required=True) # TODO: Parse url to prevent malicious url
 }
 request_args.delete = {
-  "comment_id":         webargs_fields.Integer(required=True)
+  "comment_id":         webargs_fields.Integer(required=True),
+  "is_primary":         webargs_fields.Boolean(required=True)
 }
 
 primary_comment_response_fields_without_error = {
@@ -58,6 +59,7 @@ response_fields.get.update(error_response)
 response_fields.post = response_fields.get
 
 response_fields.delete = error_response
+response_fields.delete["delete_type"] = restful_fields.Integer(default = CommentDeleteType.DELETE_UNDEFINED.value)
 
 class CommentApi(Resource):
   @r_lock
@@ -99,9 +101,10 @@ class CommentApi(Resource):
   @marshal_with(response_fields.delete)
   def delete(self, args):
     comment_id          = args["comment_id"]
+    is_primary          = args["is_primary"]
     user_id             = multi_auth.current_user().user_id
 
-    return delete_comment(comment_id, user_id)
+    return delete_comment(comment_id, user_id, is_primary)
 
 @handle_exception
 def save_comment(
@@ -179,12 +182,22 @@ def get_comment(comment_id):
     raise DbNotFound(error_msg = f"Cannot find comment by comment id: {comment_id}")
 
 @handle_exception
-def delete_comment(comment_id, user_id):
-  count = Comment.delete_comment_with_user_check(comment_id, user_id)
-  if count == 1:
-    return {}
-  elif count == 0:
-    raise CommentUserDontMatch
+def delete_comment(comment_id, user_id, is_primary):
+  deltype, count = Comment.delete_comment_with_user_check(comment_id, user_id, is_primary)
+  if deltype == CommentDeleteType.DELETE_DIRECTLY:
+    if count == 1:
+      return { "delete_type": deltype.value }
+    else:
+      raise CommentDeleteError
+  elif deltype == CommentDeleteType.DELETE_DIRECTLY_WITH_PARENT:
+    if count == 2:
+      return { "delete_type": deltype.value }
+    else:
+      raise CommentDeleteError
+  elif deltype == CommentDeleteType.DELETE_BY_MARK:
+    return { "delete_type": deltype.value }
+  elif deltype == CommentDeleteType.DELETE_UNDEFINED:
+    raise CommentDeleteError
   else:
     # TODO: add log here, this should be impossible
     raise InternalError
