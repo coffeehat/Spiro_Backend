@@ -1,5 +1,8 @@
 from spiro import Server, SpiroConfig
 
+SpiroConfig.network.listen_ip= "0.0.0.0"
+SpiroConfig.network.port = "5000"
+
 # You must use your own token key, you can set whatever you want, but keep secret
 SpiroConfig.network.token_key = "spiro"
 
