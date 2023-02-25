@@ -6,10 +6,10 @@ from ..common.utils import is_email
 
 class User(db.Model):
   user_id                 = sa.Column(sa.Integer, primary_key=True)
-  user_name               = sa.Column(sa.String,  nullable=False, unique=True)
-  user_email              = sa.Column(sa.String,  unique=True)
+  user_name               = sa.Column(sa.String(40),  nullable=False, unique=True)
+  user_email              = sa.Column(sa.String(60),  unique=True)
   user_role               = sa.Column(sa.Integer, nullable=False)
-  user_passwd             = sa.Column(sa.String)
+  user_passwd             = sa.Column(sa.String(150))
   user_register_timestamp = sa.Column(sa.Integer)
   user_is_email_verified  = sa.Column(sa.Boolean)
 
